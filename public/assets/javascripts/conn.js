@@ -257,12 +257,13 @@ class PeerConnection extends EventBus {
 
     /* -----------------------------------------------------------------------*/
     _subscribeToDataChannelEvents(dc) {
-        dc.onopen = this._onDataChannelOpen.bind(this);
         dc.onclose = this._onDataChannelClose.bind(this);
         dc.onerror = this._onDataChannelError.bind(this);
         if (dc.label === 'text') {
+            dc.onopen = this._onDataTextChannelOpen.bind(this);
             dc.onmessage = this._onDataChannelMessage.bind(this);
         } else if (dc.label === 'file') {
+            dc.onopen = this._onDataFileChannelOpen.bind(this);
             dc.onmessage = this._onDataChannelFile.bind(this);
         }
     }
@@ -318,10 +319,16 @@ class PeerConnection extends EventBus {
         }
     }
 
-    async _onDataChannelOpen(_event) {
+    async _onDataTextChannelOpen(_event) {
         this.emit('onpeerconnected', {status: this._textDC.readyState});
         if (this._debug) {
-            console.log('data channel open');
+            console.log('text channel open');
+        }
+    }
+
+    async _onDataFileChannelOpen(_event) {
+        if (this._debug) {
+            console.log('file channel open');
         }
     }
 }
