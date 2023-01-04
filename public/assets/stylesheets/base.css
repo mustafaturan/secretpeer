@@ -1,0 +1,180 @@
+html, body {
+    height: 100%
+}
+
+body {
+    padding: 0;
+    margin: 0;
+    background-color: #FFFFFF;
+    font-family: sans-serif;
+}
+
+header {
+    background-color: #F7F9FB;
+    border-bottom: 1px solid #EFEFEF;
+    height: 70px;
+}
+
+main {
+    height: calc(100% - 150px);
+    overflow: scroll;
+}
+
+footer {
+    background-color: #F7F9FB;
+    border-top: 1px solid #EFEFEF;
+    height: 80px;
+}
+
+[contentEditable=true]:empty:not(:focus):before {
+    content: attr(data-text);
+    color: #847e7e;
+}
+
+[contentEditable=true]:focus {
+    outline: none;
+}
+
+.container {
+    padding: 20px;
+}
+
+.text-right {
+    text-align: right;
+}
+
+.text-left {
+    text-align: left;
+}
+
+.text-center {
+    text-align: center;
+}
+
+.title {
+    font-size: 1em;
+    color: #07c456;
+}
+.status {
+    font-size: 0.7em;
+    top: -28px;
+    position: relative;
+    width: 100%;
+    text-align: right;
+    color: gray;
+}
+.green {
+    color: rgb(47, 150, 47);
+}
+.red {
+    color: rgb(227, 22, 22);
+}
+.yellow {
+    color: rgb(234, 234, 27);
+}
+
+/* Messages */
+
+.message-time {
+    padding-left: 10px;
+    color: #847e7e;
+}
+
+.messages {
+    width: 100%;
+    margin: auto;
+}
+
+.message {
+    padding-bottom: 10px;
+    margin-top: 0px;
+    display: block;
+    background-color: #ffffff;
+}
+
+.message .message-outgoing {
+    display: inline-block;
+    padding: 8px 12px 8px 12px;
+    margin: 0px;
+    background-color: #f0feef;
+    color: #222222;
+    font-size: 0.83em;
+    border-radius: 5px 5px 0px 5px;
+    overflow-wrap: anywhere;
+}
+
+.message .message-incoming {
+    display: inline-block;
+    padding: 8px 12px 8px 12px;
+    margin: 0px;
+    background-color: #efefef;
+    color: #222222;
+    font-size: 0.83em;
+    border-radius: 5px 5px 5px 0;
+    overflow-wrap: anywhere;
+}
+
+/* Footer content */
+
+.footer-content {
+    font-size: 0.8em;
+    padding-top: 15px
+}
+
+.input-message {
+    padding: 10px;
+    background-color: #FFFFFF;
+    border-radius: 5px;
+    border: 1px solid #FFFFFF;
+    font-size: 0.8em;
+}
+
+/* Main content */
+
+.main-content {
+    font-size: 0.8em;
+}
+
+.commands {
+    margin: 0px;
+    padding: 0px 0px 0px 10px;
+    list-style-type: none;
+}
+.commands li {
+    text-indent: 0px;
+}
+.commands li:before {
+    content: "-";
+    text-indent: 0px;
+    padding-right: 5px;
+}
+
+/* Setup */
+
+.setup {
+    font-size: 0.8em;
+}
+.setup-info {
+    border: 1px dashed red;
+    padding: 3px;
+}
+
+/* Notification */
+.notifications {
+    position:absolute;
+    top:0px;
+    width:100%;
+}
+.notifications .notification{
+    position:relative;
+    width:100%;
+    height:20px;
+    box-sizing:border-box;
+    color:#ffffff;
+    text-align:center;
+    background:rgba(0,0,0,.6);
+    overflow:hidden;
+    box-sizing:border-box;
+    transition:height .2s;
+    font-size: 0.8em;
+}
