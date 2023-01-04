@@ -139,8 +139,8 @@ async function subscribeToPeerEvents() {
         alert('Connected to the peer');
     });
     peer.on('onpeerdisconnected', function(_event) {
-        statusText.innerText = peer.isConnected ? 'connected' : 'disconnected';
-        if (!peer.isConnected) {
+        statusText.innerText = peer && peer.isConnected ? 'connected' : 'disconnected';
+        if (!peer || !peer.isConnected) {
             alert('Disconnected from the peer');
         }
     });
