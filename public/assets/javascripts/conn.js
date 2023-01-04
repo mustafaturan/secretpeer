@@ -295,6 +295,9 @@ class PeerConnection extends EventBus {
     }
 
     async _onDataChannelError(event) {
+        if (this._textDC.readyState !== 'open') {
+            this.emit('onpeerdisconnected', {status: this._textDC.readyState});
+        }
         console.error(`dc error occurred: '${event.error}'`);
     }
 
