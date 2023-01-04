@@ -260,10 +260,10 @@ class PeerConnection extends EventBus {
         dc.onclose = this._onDataChannelClose.bind(this);
         dc.onerror = this._onDataChannelError.bind(this);
         if (dc.label === 'text') {
-            dc.onopen = this._onDataTextChannelOpen.bind(this);
-            dc.onmessage = this._onDataChannelMessage.bind(this);
+            dc.onopen = this._onDataChannelTextOpen.bind(this);
+            dc.onmessage = this._onDataChannelText.bind(this);
         } else if (dc.label === 'file') {
-            dc.onopen = this._onDataFileChannelOpen.bind(this);
+            dc.onopen = this._onDataChannelFileOpen.bind(this);
             dc.onmessage = this._onDataChannelFile.bind(this);
         }
     }
@@ -301,7 +301,7 @@ class PeerConnection extends EventBus {
         console.error(`dc error occurred: '${event.error}'`);
     }
 
-    async _onDataChannelMessage(event) {
+    async _onDataChannelText(event) {
         let msg = JSON.parse(event.data);
         if (msg.data.file) {
             this.emit('onpeerfilemetadata', {id: msg.id, data: msg.data.file});
@@ -322,14 +322,14 @@ class PeerConnection extends EventBus {
         }
     }
 
-    async _onDataTextChannelOpen(_event) {
+    async _onDataChannelTextOpen(_event) {
         this.emit('onpeerconnected', {status: this._textDC.readyState});
         if (this._debug) {
             console.log('text channel open');
         }
     }
 
-    async _onDataFileChannelOpen(_event) {
+    async _onDataChannelFileOpen(_event) {
         if (this._debug) {
             console.log('file channel open');
         }
