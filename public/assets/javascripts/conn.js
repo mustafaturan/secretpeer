@@ -96,14 +96,14 @@ class PeerConnection extends EventBus {
     }
 
     #_onSignalError(event) {
-        this.logerror(`[signal] error: ${event.data}`);
+        this.logerror(`[signal] error: '${event.data}'`);
         this.emit('onsignalerror', {status: 'error'});
     }
 
     async #_onSignalMessage(signalMsg) {
         if (signalMsg.candidate) {
             const icecandidate = await this._locksmith.decrypt(signalMsg.candidate, signalMsg.nonce);
-            this.log('[signal] received ice candidate from signal:', icecandidate);
+            this.log(`[signal] received ice candidate from signal: '${icecandidate}'`);
             let candidate = JSON.parse(icecandidate);
             if (this._pc.remoteDescription !== null) {
                 try {
@@ -114,7 +114,7 @@ class PeerConnection extends EventBus {
                             this._onAddIceCandidateError.bind(this)
                         );
                 } catch (e) {
-                    this.logerror('[signal/webrtc] error adding received ice candidate', e);
+                    this.logerror(`[signal/webrtc] error adding received ice candidate ${e.toString()}`);
                 }
             } else {
                 this._candidates.push(candidate);
@@ -190,11 +190,11 @@ class PeerConnection extends EventBus {
     }
 
     async _onCreateSessionDescriptionError(error) {
-        this.logerror(`[webrtc/pc] failed to create session description: ${error.toString()}`);
+        this.logerror(`[webrtc/pc] failed to create session description: '${error.toString()}'`);
     }
 
     async _onConnectionStateChange(_event) {
-        this.log('[webrtc/pc] connection state changed', this._pc.connectionState, this._pc.iceConnectionState);
+        this.log(`[webrtc/pc] connection state changed '${this._pc.connectionState}' / '${this._pc.iceConnectionState}'`);
         if (this._pc.connectionState === 'connected' && this._pc.iceConnectionState === 'connected') {
             this._signal.close();
         }
@@ -213,7 +213,7 @@ class PeerConnection extends EventBus {
                         this._onAddIceCandidateError.bind(this)
                     );
             } catch (e) {
-                this.logerror('[webrtc/pc] Error adding received ice candidate', e);
+                this.logerror(`[webrtc/pc] Error adding received ice candidate: '${e.toString()}'`);
             }
         } else {
             this._candidates.push(event.candidate);
@@ -234,11 +234,11 @@ class PeerConnection extends EventBus {
     }
 
     async _onAddIceCandidateSuccess() {
-        this.log('[webrtc/pc] addIceCandidate success');
+        this.log('[webrtc/pc] successfully added ice candidate');
     }
 
     async _onAddIceCandidateError(error) {
-        this.logerror(`[webrtc/pc] failed to add Ice Candidate: ${error.toString()}`);
+        this.logerror(`[webrtc/pc] failed to add ice candidate: '${error.toString()}'`);
     }
 
     /* -----------------------------------------------------------------------*/
@@ -299,7 +299,7 @@ class PeerConnection extends EventBus {
             this.emit('onpeerfile', {data: event.data});
         }
 
-        this.log(`[webrtc/fc] file content received with byte size '${event.data.byteLength}'`);
+        this.log(`[webrtc/fc] file content received with byte size: '${event.data.byteLength}'`);
     }
 
     async _onDataChannelTextOpen(_event) {
@@ -330,7 +330,7 @@ class Caller extends PeerConnection {
 
     async onmessage(event) {
         if (this._debug) {
-            this.log(`[signal] received: ${event.data}`);
+            this.log(`[signal] received: '${event.data}'`);
         }
 
         let signalMsg = JSON.parse(event.data);
@@ -399,7 +399,7 @@ class Caller extends PeerConnection {
                         this._onAddIceCandidateError.bind(this)
                     );
             } catch (e) {
-                this.logerror('[webrtc/pc] error adding received ice candidate', e);
+                this.logerror(`[webrtc/pc] error adding received ice candidate: '${e.toString()}'`);
             }
 
             this._candidates = [];
