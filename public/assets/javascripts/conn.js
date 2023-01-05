@@ -60,7 +60,7 @@ class PeerConnection extends EventBus {
         this._textDC = null;
 
         // init signal ping count with 0
-        this.signalPingCount = 0;
+        this.#signalPingCount = 0;
 
         // peer connection
         this._pc = new RTCPeerConnection(configuration);
