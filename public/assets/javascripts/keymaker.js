@@ -25,15 +25,12 @@ class LockIO {
 class Locksmith {
     constructor(word1, word2, pin) {
         if (!words.includes(word1)) {
-            alert(`invalid word: ${word1}`);
             throw new Error(`invalid word: ${word1}`);
         }
         if (!words.includes(word2)) {
-            alert(`invalid word: ${word2}`);
             throw new Error(`invalid word: ${word2}`);
         }
         if (!(!isNaN(parseFloat(pin)) && isFinite(pin)) || pin.length !== 6) {
-            alert(`pincode must be a 6 digit number! ${pin}`);
             throw new Error(`pincode must be a 6 digit number! ${pin}`);
         }
 
