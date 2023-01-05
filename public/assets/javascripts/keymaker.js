@@ -66,19 +66,19 @@ class Locksmith {
         }
 
         const keyMaterial = await window.crypto.subtle.importKey(
-            "raw",
+            'raw',
             this._digestEntropy,
-            "PBKDF2",
+            'PBKDF2',
             false,
-            ["deriveBits", "deriveKey"],
+            ['deriveBits', 'deriveKey'],
         );
 
         const digest = await window.crypto.subtle.deriveBits(
             {
-              name: "PBKDF2",
+              name: 'PBKDF2',
               salt: SALT,
               iterations: 262144, // 2^18
-              hash: "SHA-256",
+              hash: 'SHA-256',
             },
             keyMaterial,
             128,
@@ -90,24 +90,24 @@ class Locksmith {
 
     async deriveKey() {
         const keyMaterial = await window.crypto.subtle.importKey(
-            "raw",
+            'raw',
             this._entropy,
-            "PBKDF2",
+            'PBKDF2',
             false,
-            ["deriveBits", "deriveKey"],
+            ['deriveBits', 'deriveKey'],
         );
 
         this._rootKey = await window.crypto.subtle.deriveKey(
             {
-              name: "PBKDF2",
+              name: 'PBKDF2',
               salt: SALT,
               iterations: 100000, // (ensure the iterations is lower than the iterations for digest)
-              hash: "SHA-256",
+              hash: 'SHA-256',
             },
             keyMaterial,
-            { "name": "AES-GCM", "length": 256},
+            { 'name': 'AES-GCM', 'length': 256},
             true,
-            ["encrypt", "decrypt"],
+            ['encrypt', 'decrypt'],
         );
     }
 
@@ -123,7 +123,7 @@ class Locksmith {
         let enc = new TextEncoder();
 
         const chipher = await window.crypto.subtle.encrypt(
-            { name: "AES-GCM", iv: nonce },
+            { name: 'AES-GCM', iv: nonce },
             this._rootKey,
             enc.encode(plaintext),
         );
@@ -137,7 +137,7 @@ class Locksmith {
         }
 
         let decrypted = await window.crypto.subtle.decrypt(
-            { name: "AES-GCM", iv: this.stringToUint8Array(nonce) },
+            { name: 'AES-GCM', iv: this.stringToUint8Array(nonce) },
             this._rootKey,
             this.stringToUint8Array(chiphertext)
         );

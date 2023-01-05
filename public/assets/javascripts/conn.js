@@ -6,15 +6,15 @@ https://github.com/mustafaturan
 const configuration = {
     iceServers: [
         {
-            urls: "stun:stun.l.google.com:19302",
+            urls: 'stun:stun.l.google.com:19302',
         }
     ],
-    bundlePolicy: "max-bundle",
-    rtcpMuxPolicy: "negotiate"
+    bundlePolicy: 'max-bundle',
+    rtcpMuxPolicy: 'negotiate'
 };
 let wsServiceURL =
     (window.location.protocol === 'https:' ? 'wss' : 'ws') +
-    "://signals.herokuapp.com/socket";
+    '://signals.herokuapp.com/socket';
 
 class EventBus extends EventTarget {
     async on(type, fn) {

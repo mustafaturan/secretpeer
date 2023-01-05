@@ -1,16 +1,16 @@
 let _debug = false;
 
-let main = getEl("main");
-let setup = getEl("setup");
-let statusText = getEl("status");
-let messages = getEl("messages");
-let message = getEl("message");
-let cword1 = getEl("cword1");
-let cword2 = getEl("cword2");
-let cpin = getEl("cpin");
-let ccword1 = getEl("ccword1");
-let ccword2 = getEl("ccword2");
-let ccpin = getEl("ccpin");
+let main = getEl('main');
+let setup = getEl('setup');
+let statusText = getEl('status');
+let messages = getEl('messages');
+let message = getEl('message');
+let cword1 = getEl('cword1');
+let cword2 = getEl('cword2');
+let cpin = getEl('cpin');
+let ccword1 = getEl('ccword1');
+let ccword2 = getEl('ccword2');
+let ccpin = getEl('ccpin');
 let notification = getEl('notification');
 
 let keys = [];
@@ -34,15 +34,7 @@ window.onload = (_event) => {
 };
 
 window.alert = (msg) => {
-    notification.classList.add("active");
-    notification.innerText = msg;
-    if (_debug) {
-        console.log('[alert] ', msg);
-    }
-    setTimeout(function(){
-        notification.classList.remove("active");
-        notification.innerText = '';
-    },2000);
+    notify(msg);
 }
 
 message.addEventListener('paste', (event) => {
@@ -52,79 +44,79 @@ message.addEventListener('paste', (event) => {
     message.innerText += paste;
 });
 
-message.addEventListener("keydown", function(event) {
+message.addEventListener('keydown', function(event) {
     if (event.code === 'Enter') {
         event.preventDefault();
         var msg = message.innerText.replace('&nbsp;', ' ').trim();
-        if (msg === "") {
+        if (msg === '') {
             msg.focus();
         } else if (msg.startsWith('/help')) {
-            showHide("help");
+            showHide('help');
         } else if (msg.startsWith('/privacy')) {
-            showHide("privacy");
+            showHide('privacy');
         } else if (msg.startsWith('/file')) {
             askFile();
         } else if (msg.startsWith('/clean') || msg.startsWith('/clear')) {
             fileBuffer = [];
             fileMetadata = {};
             fileSize = 0;
-            messages.innerHTML = "";
-            showHide("messages");
+            messages.innerHTML = '';
+            showHide('messages');
             generate();
         } else if (msg.startsWith('/create')) {
             fileBuffer = [];
             fileMetadata = {};
             fileSize = 0;
             messages.innerHTML = setup.innerHTML;
-            statusText.innerText = "waiting participant";
-            showHide("messages");
+            statusText.innerText = 'waiting participant';
+            showHide('messages');
             setTimeout(function() {
                 dial();
             }, 15000);
         } else if (msg.startsWith('/join')) {
-            const joinKeys = msg.split(" ").slice(1,4);
+            const joinKeys = msg.split(' ').slice(1,4);
             if (!words.includes(joinKeys[0])) {
-                alert(`Invalid word#1: ${joinKeys[0]}`);
+                notify(`Invalid word#1: ${joinKeys[0]}`);
                 throw new Error(`invalid word: ${word1}`);
             }
             if (!words.includes(joinKeys[1])) {
-                alert(`Invalid word#2: ${joinKeys[1]}`);
+                notify(`Invalid word#2: ${joinKeys[1]}`);
                 throw new Error(`invalid word: ${joinKeys[1]}`);
             }
             if (!(!isNaN(parseFloat(joinKeys[2])) && isFinite(joinKeys[2])) || joinKeys[2].length !== 6) {
-                alert(`Invalid pin (must 6 digit number): ${joinKeys[2]}`);
+                notify(`Invalid pin (must 6 digit number): ${joinKeys[2]}`);
                 throw new Error(`pincode must be a 6 digit number! ${joinKeys[2]}`);
             }
 
             fileBuffer = [];
             fileMetadata = {};
             fileSize = 0;
-            messages.innerHTML = "";
-            statusText.innerText = "waiting participant";
-            showHide("messages");
+            messages.innerHTML = '';
+            statusText.innerText = 'waiting participant';
+            showHide('messages');
             answer(joinKeys);
         } else if (msg.startsWith('/leave') || msg.startsWith('/quit')) {
             fileBuffer = [];
             fileMetadata = {};
             fileSize = 0;
-            messages.innerHTML = "";
+            messages.innerHTML = '';
             if (peer !== null && peer !== undefined) {
                 peer.hangup();
-                statusText.innerText = "disconnected";
+                statusText.innerText = 'disconnected';
             }
 
-            showHide("help");
+            showHide('help');
             keys = KeyMaker.random();
         } else {
             if (peer === null || peer === undefined) {
-                alert('Peer connection is not established');
+                notify('Peer connection is not established');
                 throw new Error('peer is not initialized');
             }
             if (!peer.isConnected && statusText.innerText === 'connected') {
                 statusText.innerText = 'disconnected';
             }
             if (statusText.innerText !== 'connected') {
-                alert(statusText.innerText);
+                notify(statusText.innerText);
                 throw new Error(`connection state ${statusText.innerText}`);
             }
             send(msg);
@@ -135,16 +127,28 @@ message.addEventListener("keydown", function(event) {
     }
 });
 
+async function notify(msg) {
+    notification.classList.add('active');
+    notification.innerText = msg;
+    if (_debug) {
+        console.log('[notify] ', msg);
+    }
+    setTimeout(function(){
+        notification.classList.remove('active');
+        notification.innerText = '';
+    },2000);
+}
+
 async function subscribeToPeerEvents() {
     /*Messaging*/
     peer.on('onpeerconnected', function(_event) {
         statusText.innerText = 'connected';
-        alert('Connected to the peer');
+        notify('Connected to the peer');
     });
     peer.on('onpeerdisconnected', function(_event) {
         statusText.innerText = peer && peer.isConnected ? 'connected' : 'disconnected';
         if (!peer || !peer.isConnected) {
-            alert('Disconnected from the peer');
+            notify('Disconnected from the peer');
         }
     });
     peer.on('onpeermessage', function(event) {
@@ -159,16 +163,16 @@ async function subscribeToPeerEvents() {
 
     /*Signal*/
     peer.on('onsignalopen', function(_event) {
-        alert('Secret room is created, waiting another participant to join!');
+        notify('Secret room is created, waiting another participant to join!');
     })
     peer.on('onsignalclose', function(event) {
         if (!peerSignalReceived && !peer.isConnected) {
-            alert('Nobody joined to room, signal is closed!');
+            notify('Nobody joined to room, signal is closed!');
             statusText.innerText = 'disconnected';
             peer.hangup();
             peer = null;
         } else if(peerSignalReceived && !peer.isConnected) {
-            alert('Could not establish peer to peer connection');
+            notify('Could not establish peer to peer connection');
             statusText.innerText = 'disconnected';
             peer.hangup();
             peer = null;
@@ -176,16 +180,16 @@ async function subscribeToPeerEvents() {
         }
     });
     peer.on('onsignalerror', function(event) {
-        alert('Something went wrong on signaling, please rejoin');
+        notify('Something went wrong on signaling, please rejoin');
         statusText.innerText = 'disconnected';
         peer.hangup();
         peer = null;
     });
     peer.on('onsignalmessage', function(event) {
         if (event.status === 'wait') {
-            alert('Waiting a participant to join to the room');
+            notify('Waiting a participant to join to the room');
         } else if (event.status === 'ready') {
-            alert('A participant joined to the room');
+            notify('A participant joined to the room');
             statusText.innerText = 'connecting';
             peerSignalReceived = true;
         }
@@ -251,14 +255,14 @@ function askFile() {
             if (_debug) {
                 console.log('emtpy file!');
             }
-            alert('Empty files can not be transfered');
+            notify('Empty files can not be transfered');
             return;
         }
 
         const id = newID();
         peer.sendText({id: id, data: {file: {name: file.name, size: file.size}}});
 
-        messages.appendChild(buildNode("message-outgoing", id, '📎 ' + file.name + ` (${humanFileSize(file.size)})`));
+        messages.appendChild(buildNode('message-outgoing', id, '📎 ' + file.name + ` (${humanFileSize(file.size)})`));
         main.scrollTop = main.scrollHeight;
 
         peer.createFileDC();
@@ -280,7 +284,7 @@ function askFile() {
         // here we tell the reader what to do when it's done reading...
         reader.onload = event => {
             if (_debug) {
-                console.log("*** file chunk loaded", offset, chunkSize);
+                console.log('*** file chunk loaded', offset, chunkSize);
             }
             let bin = event.target.result;
             peer.sendFile(bin);
@@ -288,7 +292,7 @@ function askFile() {
             if (offset < file.size) {
                 readChunk(offset);
             } else if (_debug) {
-                console.log("*** file transfer completed");
+                console.log('*** file transfer completed');
                 io = null;
             }
         }
@@ -302,7 +306,7 @@ function askFile() {
 function send(msg) {
     const id = newID();
     peer.sendText({id: id, data: msg});
-    messages.appendChild(buildNode("message-outgoing", id, msg));
+    messages.appendChild(buildNode('message-outgoing', id, msg));
     main.scrollTop = main.scrollHeight;
 }
 
@@ -312,12 +316,12 @@ function receiveFileMetadata(id, metadata) {
     if (_debug) {
         console.log('*** file metadata', fileMetadata);
     }
-    messages.appendChild(buildNode("message-incoming", id, '📎 ' + metadata.name));
+    messages.appendChild(buildNode('message-incoming', id, '📎 ' + metadata.name));
     main.scrollTop = main.scrollHeight;
 }
 
 function receive(id, data) {
-    messages.appendChild(buildNode("message-incoming", id, data));
+    messages.appendChild(buildNode('message-incoming', id, data));
     main.scrollTop = main.scrollHeight;
 }
 
@@ -326,7 +330,7 @@ function receiveFile(data) {
     fileSize += data.byteLength;
     if (fileSize === fileMetadata.size) {
         const received = new Blob(fileBuffer);
-        let downloadAnchor = createEl("a");
+        let downloadAnchor = createEl('a');
         downloadAnchor.href = URL.createObjectURL(received);
         downloadAnchor.download = fileMetadata.name;
         downloadAnchor.textContent =
@@ -347,10 +351,10 @@ function receiveFile(data) {
 }
 
 function buildNode(type, id, msg) {
-    let node = createEl("div");
-    node.classList.add("message");
+    let node = createEl('div');
+    node.classList.add('message');
     node.classList.add(type === 'message-outgoing' ? 'text-right' : 'text-left');
-    let input = createEl("div");
+    let input = createEl('div');
     input.classList.add(type)
     let content = buildContent(id, msg);
     content.appendChild(buildTime());
@@ -360,10 +364,10 @@ function buildNode(type, id, msg) {
 }
 
 function buildTime() {
-    var node = createEl("sub");
-    node.classList.add("message-time")
+    var node = createEl('sub');
+    node.classList.add('message-time')
     const date = new Date();
-    node.innerText = pad2(date.getHours()) + ":" + pad2(date.getMinutes());
+    node.innerText = pad2(date.getHours()) + ':' + pad2(date.getMinutes());
     return node;
 }
 
@@ -372,8 +376,8 @@ function pad2(number) {
 }
 
 function buildContent(id, msg) {
-    var node = createEl("div");
-    node.classList.add("content")
+    var node = createEl('div');
+    node.classList.add('content')
     node.id = 'm_' + id;
     node.innerText = msg;
     return node;
