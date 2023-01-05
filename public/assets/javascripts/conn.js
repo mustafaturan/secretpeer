@@ -44,6 +44,7 @@ class PeerConnection extends EventBus {
         // room name
         this._room = room;
 
+        // is two peer joined
         this._roomIsFull = false;
 
         // encryption / decryption service
@@ -57,6 +58,9 @@ class PeerConnection extends EventBus {
 
         // init data channel
         this._textDC = null;
+
+        // init signal ping count with 0
+        this.signalPingCount = 0;
 
         // peer connection
         this._pc = new RTCPeerConnection(configuration);
