@@ -1,17 +1,17 @@
 let _debug = false;
 
-let main = document.getElementById("main");
-let setup = document.getElementById("setup");
-let statusText = document.getElementById("status");
-let messages = document.getElementById("messages");
-let message = document.getElementById("message");
-let cword1 = document.getElementById("cword1");
-let cword2 = document.getElementById("cword2");
-let cpin = document.getElementById("cpin");
-let ccword1 = document.getElementById("ccword1");
-let ccword2 = document.getElementById("ccword2");
-let ccpin = document.getElementById("ccpin");
-let notification = document.getElementById('notification');
+let main = getEl("main");
+let setup = getEl("setup");
+let statusText = getEl("status");
+let messages = getEl("messages");
+let message = getEl("message");
+let cword1 = getEl("cword1");
+let cword2 = getEl("cword2");
+let cpin = getEl("cpin");
+let ccword1 = getEl("ccword1");
+let ccword2 = getEl("ccword2");
+let ccpin = getEl("ccpin");
+let notification = getEl('notification');
 
 let keys = [];
 let roomDigest;
@@ -36,6 +36,9 @@ window.onload = (_event) => {
 window.alert = (msg) => {
     notification.classList.add("active");
     notification.innerText = msg;
+    if (_debug) {
+        console.log('[alert] ', msg);
+    }
     setTimeout(function(){
         notification.classList.remove("active");
         notification.innerText = '';
@@ -183,6 +186,7 @@ async function subscribeToPeerEvents() {
             alert('Waiting a participant to join to the room');
         } else if (event.status === 'ready') {
             alert('A participant joined to the room');
+            statusText.innerText = 'connecting';
             peerSignalReceived = true;
         }
     });
@@ -229,14 +233,14 @@ async function answer(keys) {
 }
 
 function showHide(show) {
-    for (let n of document.getElementById('main-content').childNodes) {
+    for (let n of getEl('main-content').childNodes) {
         n.hidden = true;
     }
-    document.getElementById(show).hidden = false;
+    getEl(show).hidden = false;
 }
 
 function askFile() {
-    let io = document.createElement('input');
+    let io = createEl('input');
     io.type = 'file';
 
     io.onchange = e => {
@@ -285,6 +289,7 @@ function askFile() {
                 readChunk(offset);
             } else if (_debug) {
                 console.log("*** file transfer completed");
+                io = null;
             }
         }
 
@@ -321,12 +326,12 @@ function receiveFile(data) {
     fileSize += data.byteLength;
     if (fileSize === fileMetadata.size) {
         const received = new Blob(fileBuffer);
-        let downloadAnchor = document.createElement("a");
+        let downloadAnchor = createEl("a");
         downloadAnchor.href = URL.createObjectURL(received);
         downloadAnchor.download = fileMetadata.name;
         downloadAnchor.textContent =
           `${fileMetadata.name} (${humanFileSize(fileMetadata.size)})`;
-        const node = document.getElementById('m_' + fileMetadata.id);
+        const node = getEl('m_' + fileMetadata.id);
         node.innerHTML = '<span>📎 </span>';
         node.appendChild(downloadAnchor);
         node.appendChild(buildTime());
@@ -342,10 +347,10 @@ function receiveFile(data) {
 }
 
 function buildNode(type, id, msg) {
-    let node = document.createElement("div");
+    let node = createEl("div");
     node.classList.add("message");
     node.classList.add(type === 'message-outgoing' ? 'text-right' : 'text-left');
-    let input = document.createElement("div");
+    let input = createEl("div");
     input.classList.add(type)
     let content = buildContent(id, msg);
     content.appendChild(buildTime());
@@ -355,7 +360,7 @@ function buildNode(type, id, msg) {
 }
 
 function buildTime() {
-    var node = document.createElement("sub");
+    var node = createEl("sub");
     node.classList.add("message-time")
     const date = new Date();
     node.innerText = pad2(date.getHours()) + ":" + pad2(date.getMinutes());
@@ -367,11 +372,19 @@ function pad2(number) {
 }
 
 function buildContent(id, msg) {
-    var node = document.createElement("div");
+    var node = createEl("div");
     node.classList.add("content")
     node.id = 'm_' + id;
     node.innerText = msg;
     return node;
+}
+
+function getEl(id) {
+    return document.getElementById(id);
+}
+
+function createEl(tag) {
+    return document.createElement(tag);
 }
 
 function newID() {
@@ -382,16 +395,15 @@ function random() {
     return (Math.floor(Math.random() * Math.floor(999999)) + '').padStart(6, '0');
 }
 
-function humanFileSize(bytes, si=true, dp=1) {
-    const thresh = si ? 1000 : 1024;
+function humanFileSize(bytes) {
+    const thresh = 1000;
+    const dp = 1;
 
     if (Math.abs(bytes) < thresh) {
       return bytes + ' B';
     }
 
-    const units = si
-      ? ['kB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB']
-      : ['KiB', 'MiB', 'GiB', 'TiB', 'PiB', 'EiB', 'ZiB', 'YiB'];
+    const units = ['kB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB'];
     let u = -1;
     const r = 10**dp;
 
@@ -402,4 +414,4 @@ function humanFileSize(bytes, si=true, dp=1) {
 
 
     return bytes.toFixed(dp) + ' ' + units[u];
-  }
+}

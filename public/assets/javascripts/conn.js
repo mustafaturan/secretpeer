@@ -44,6 +44,8 @@ class PeerConnection extends EventBus {
         // room name
         this._room = room;
 
+        this._roomIsFull = false;
+
         // encryption / decryption service
         this._locksmith = locksmith;
 
@@ -73,7 +75,7 @@ class PeerConnection extends EventBus {
 
     #_onSignalOpen() {
         if (this._debug) {
-            console.log('[signal] opened');
+            this.log('[signal] opened');
         }
         const signalMsgIntent = {
             room: this._room,
@@ -87,25 +89,21 @@ class PeerConnection extends EventBus {
     }
 
     #_onSignalClose() {
-        if (this._debug) {
-            console.log('[signal] closed');
-        }
+        this.log('[signal] closed');
         if (!this._pc.isConnected) {
             this.emit('onsignalclose', {status: 'failed'});
         }
     }
 
     #_onSignalError(event) {
-        console.error(`[signal] error: ${event.data}`);
+        this.logerror(`[signal] error: ${event.data}`);
         this.emit('onsignalerror', {status: 'error'});
     }
 
     async #_onSignalMessage(signalMsg) {
         if (signalMsg.candidate) {
             const icecandidate = await this._locksmith.decrypt(signalMsg.candidate, signalMsg.nonce);
-            if (this._debug) {
-                console.log('received ice candidate from signal:', icecandidate);
-            }
+            this.log('[signal] received ice candidate from signal:', icecandidate);
             let candidate = JSON.parse(icecandidate);
             if (this._pc.remoteDescription !== null) {
                 try {
@@ -116,7 +114,7 @@ class PeerConnection extends EventBus {
                             this._onAddIceCandidateError.bind(this)
                         );
                 } catch (e) {
-                    console.error('error adding received ice candidate', e);
+                    this.logerror('[signal/webrtc] error adding received ice candidate', e);
                 }
             } else {
                 this._candidates.push(candidate);
@@ -126,7 +124,7 @@ class PeerConnection extends EventBus {
 
     async #_pingSignal() {
         setTimeout(function(){
-            if (this._signal.readyState !== WebSocket.CLOSED && this.#signalPingCount < 5) {
+            if (!this._roomIsFull && this._signal.readyState !== WebSocket.CLOSED && this.#signalPingCount < 5) {
                 this._sendSignal({room: this._room, intent: 'ping'});
                 this.#_pingSignal();
             }
@@ -136,16 +134,14 @@ class PeerConnection extends EventBus {
 
     async _sendSignal(signalMsg) {
         this._signal.send(JSON.stringify(signalMsg));
-        if (this._debug) {
-            console.log(`[signal] sent: ${JSON.stringify(signalMsg)}`);
-        }
+        this.log(`[signal] sent: ${JSON.stringify(signalMsg)}`);
     }
 
     async sendText(text) {
         if (this._textDC !== undefined && this._textDC !== null && this._textDC.readyState === 'open') {
             this._textDC.send(JSON.stringify(text));
         } else {
-            throw new Error(`textdc readystate: ${this._textDC ? this._textDC.readyState : 'undefined'}`);
+            throw new Error(`[webrtc/tc] readystate: ${this._textDC ? this._textDC.readyState : 'undefined'}`);
         }
     }
 
@@ -153,7 +149,7 @@ class PeerConnection extends EventBus {
         if (this._fileDC !== undefined && this._fileDC !== null && this._fileDC.readyState === 'open') {
             this._fileDC.send(bin);
         } else {
-            throw new Error(`filedc readystate: ${this._fileDC ? this._fileDC.readyState : 'undefined'}`);
+            throw new Error(`[webrtc/fc] readystate: ${this._fileDC ? this._fileDC.readyState : 'undefined'}`);
         }
     }
 
@@ -190,19 +186,15 @@ class PeerConnection extends EventBus {
 
     async _onSession(desc) {
         await this._pc.setLocalDescription(desc);
-        if (this._debug) {
-            console.log(`local description set to: \n${desc.sdp}`);
-        }
+        this.log(`[webrtc/pc] local description set to: \n${desc.sdp}`);
     }
 
     async _onCreateSessionDescriptionError(error) {
-        console.error(`failed to create session description: ${error.toString()}`);
+        this.logerror(`[webrtc/pc] failed to create session description: ${error.toString()}`);
     }
 
     async _onConnectionStateChange(_event) {
-        if (this._debug) {
-            console.log('connection state changed', this._pc.connectionState, this._pc.iceConnectionState);
-        }
+        this.log('[webrtc/pc] connection state changed', this._pc.connectionState, this._pc.iceConnectionState);
         if (this._pc.connectionState === 'connected' && this._pc.iceConnectionState === 'connected') {
             this._signal.close();
         }
@@ -221,7 +213,7 @@ class PeerConnection extends EventBus {
                         this._onAddIceCandidateError.bind(this)
                     );
             } catch (e) {
-                console.error('Error adding received ice candidate', e);
+                this.logerror('[webrtc/pc] Error adding received ice candidate', e);
             }
         } else {
             this._candidates.push(event.candidate);
@@ -238,21 +230,15 @@ class PeerConnection extends EventBus {
             this._sendSignal(signalMsgCandidate);
         }
 
-        if (this._debug) {
-            console.log(`ICE candidate: ${event.candidate ? event.candidate.candidate : `null`}`);
-        }
+        this.log(`[webrtc/pc] ICE candidate: ${event.candidate ? event.candidate.candidate : `null`}`);
     }
 
     async _onAddIceCandidateSuccess() {
-        if (this._debug) {
-            console.log('addIceCandidate success');
-        }
+        this.log('[webrtc/pc] addIceCandidate success');
     }
 
     async _onAddIceCandidateError(error) {
-        if (this._debug) {
-            console.log(`failed to add Ice Candidate: ${error.toString()}`);
-        }
+        this.logerror(`[webrtc/pc] failed to add Ice Candidate: ${error.toString()}`);
     }
 
     /* -----------------------------------------------------------------------*/
@@ -274,9 +260,7 @@ class PeerConnection extends EventBus {
     async _onDataChannel(event) {
         let dc = event.channel;
         this._subscribeToDataChannelEvents(dc);
-        if (this._debug) {
-            console.log(`data channel received: ${dc.label}`);
-        }
+        this.log(`[webrtc/dc] data channel received: ${dc.label}`);
 
         if (dc.label === 'text') {
             this._textDC = dc;
@@ -289,16 +273,14 @@ class PeerConnection extends EventBus {
         if (this._textDC.readyState !== 'open') {
             this.emit('onpeerdisconnected', {status: this._textDC.readyState});
         }
-        if (this._debug) {
-            console.log('data channel closed', this._userClosed);
-        }
+        this.log(`[webrtc/dc] data channel closed (user closed: ${this._userClosed})`);
     }
 
     async _onDataChannelError(event) {
         if (this._textDC.readyState !== 'open') {
             this.emit('onpeerdisconnected', {status: this._textDC.readyState});
         }
-        console.error(`dc error occurred: '${event.error}'`);
+        this.logerror(`[webrtc/dc] dc error occurred: '${event.error}'`);
     }
 
     async _onDataChannelText(event) {
@@ -308,31 +290,35 @@ class PeerConnection extends EventBus {
         } else {
             this.emit('onpeermessage', {id: msg.id, data: msg.data});
         }
-        if (this._debug) {
-            console.log(`message received: '${event.data}'`);
-        }
+
+        this.log(`[webrtc/tc] message received: '${event.data}'`);
     }
 
     async _onDataChannelFile(event) {
         if (this._textDC.readyState === 'open') {
             this.emit('onpeerfile', {data: event.data});
         }
-        if (this._debug) {
-            console.log(`file content received with byte size '${event.data.byteLength}'`);
-        }
+
+        this.log(`[webrtc/fc] file content received with byte size '${event.data.byteLength}'`);
     }
 
     async _onDataChannelTextOpen(_event) {
         this.emit('onpeerconnected', {status: this._textDC.readyState});
-        if (this._debug) {
-            console.log('text channel open');
-        }
+        this.log('[webrtc/tc] text channel open');
     }
 
     async _onDataChannelFileOpen(_event) {
+        this.log('[webrtc/fc] file channel open');
+    }
+
+    log(msg) {
         if (this._debug) {
-            console.log('file channel open');
+            console.log(msg);
         }
+    }
+
+    logerror(msg) {
+        console.error(msg);
     }
 }
 
@@ -344,7 +330,7 @@ class Caller extends PeerConnection {
 
     async onmessage(event) {
         if (this._debug) {
-            console.log(`[signal] received: ${event.data}`);
+            this.log(`[signal] received: ${event.data}`);
         }
 
         let signalMsg = JSON.parse(event.data);
@@ -354,6 +340,7 @@ class Caller extends PeerConnection {
                 case 'ready':
                     this.emit('onsignalmessage', {status: 'ready'});
                     this.dial();
+                    this._roomIsFull = true;
                     break;
                 case 'wait':
                     this.emit('onsignalmessage', {status: 'wait'});
@@ -379,7 +366,7 @@ class Caller extends PeerConnection {
 
     async dial() {
         if (this._debug) {
-            console.log(`data channel created: '${this._room}'`);
+            this.log(`[webrtc/tc] data channel created: '${this._room}'`);
         }
 
         await this.createTextDC();
@@ -412,7 +399,7 @@ class Caller extends PeerConnection {
                         this._onAddIceCandidateError.bind(this)
                     );
             } catch (e) {
-                console.error('Error adding received ice candidate', e);
+                this.logerror('[webrtc/pc] error adding received ice candidate', e);
             }
 
             this._candidates = [];
@@ -428,14 +415,23 @@ class Callee extends PeerConnection {
 
     async onmessage(event) {
         if (this._debug) {
-            console.log(`[signal] received: ${event.data}`);
+            this.log(`[signal] received: ${event.data}`);
         }
 
         let signalMsg = JSON.parse(event.data);
 
         // handle state
         if (signalMsg.state) {
-            return;
+            switch(signalMsg.state) {
+                case 'ready':
+                    this.emit('onsignalmessage', {status: 'ready'});
+                    this._roomIsFull = true;
+                    break;
+                case 'wait':
+                    this.emit('onsignalmessage', {status: 'wait'});
+                    break;
+            }
+            return
         }
 
         // handle description
@@ -464,5 +460,6 @@ class Callee extends PeerConnection {
             nonce: encrypted.nonce.toString()
         };
         this._sendSignal(signalMsgAnswer);
+        this._roomIsFull = true;
     }
 }
