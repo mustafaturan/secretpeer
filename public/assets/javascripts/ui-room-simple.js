@@ -47,7 +47,7 @@ message.addEventListener('paste', (event) => {
 message.addEventListener('keydown', function(event) {
     if (event.code === 'Enter') {
         event.preventDefault();
-        var msg = message.innerText.replace('&nbsp;', ' ').trim();
+        var msg = message.innerText.trim();
         if (msg === '') {
             msg.focus();
         } else if (msg.startsWith('/help')) {
@@ -68,13 +68,17 @@ message.addEventListener('keydown', function(event) {
             fileMetadata = {};
             fileSize = 0;
             messages.innerHTML = setup.innerHTML;
-            statusText.innerText = 'waiting participant';
             showHide('messages');
-            setTimeout(function() {
-                dial();
-            }, 15000);
+            statusText.innerText = 'initializing signal';
+            prepare().then((result) => {
+                [ls, room] = result;
+                setTimeout(function() {
+                    dial(ls, room);
+                    statusText.innerText = 'waiting participant';
+                }, 15000);
+            });
         } else if (msg.startsWith('/join')) {
-            const joinKeys = msg.split(' ').slice(1,4);
+            const joinKeys = msg.replace(/\s+/g, ' ').trim().split(' ').slice(1,4);
             if (!words.includes(joinKeys[0])) {
                 notify(`Invalid word#1: ${joinKeys[0]}`);
                 throw new Error(`invalid word: ${word1}`);
@@ -92,9 +96,12 @@ message.addEventListener('keydown', function(event) {
             fileMetadata = {};
             fileSize = 0;
             messages.innerHTML = '';
-            statusText.innerText = 'waiting participant';
             showHide('messages');
-            answer(joinKeys);
+            prepare(joinKeys).then((result) => {
+                [ls, room] = result;
+                answer(ls, room);
+                statusText.innerText = 'waiting participant';
+            });
         } else if (msg.startsWith('/leave') || msg.startsWith('/quit')) {
             fileBuffer = [];
             fileMetadata = {};
@@ -206,8 +213,15 @@ async function generate() {
     ccpin.innerText = keys[2];
 }
 
-async function dial() {
-    let ls = new Locksmith(keys[0], keys[1], keys[2]);
+async function prepare(joinKeys = keys) {
+    let ls;
+    try {
+        ls = new Locksmith(joinKeys[0], joinKeys[1], joinKeys[2]);
+    } catch (e) {
+        notify(`Could not init encryption library!`);
+        statusText.innerText = 'failed';
+        throw new Error(`Could not init encryption library: ${e.toString()}`);
+    }
     if (ls === null) {
         return
     }
@@ -217,21 +231,24 @@ async function dial() {
         peer = null;
         peerSignalReceived = false;
     }
-    peer = new Caller(wsServiceURL, configuration, await ls.digest(), ls, _debug);
+    let room;
+    try {
+        room = await ls.digest();
+    } catch(e) {
+        notify(`Could not init encryption library!`);
+        throw new Error(`Could not init encryption library: ${e.toString()}`);
+    }
+
+    return [ls, room];
+}
+
+async function dial(ls, room) {
+    peer = new Caller(wsServiceURL, configuration, room, ls, _debug);
     await subscribeToPeerEvents();
 }
 
-async function answer(keys) {
-    let ls = new Locksmith(keys[0], keys[1], keys[2]);
-    if (ls === null) {
-        return
-    }
-    if (peer !== undefined && peer !== null) {
-        peer.hangup();
-        peer = null;
-        peerSignalReceived = false;
-    }
-    peer = new Callee(wsServiceURL, configuration, await ls.digest(), ls, _debug);
+async function answer(ls, room) {
+    peer = new Callee(wsServiceURL, configuration, room, ls, _debug);
     await subscribeToPeerEvents();
     main.scrollTop = main.scrollHeight;
 }
