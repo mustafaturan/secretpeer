@@ -60,9 +60,9 @@ class PeerConnection extends EventBus {
 
         // peer connection
         this._pc = new RTCPeerConnection(configuration);
-        this._pc.onicecandidate = this._onIceCandidate.bind(this);
-        this._pc.ondatachannel = this._onDataChannel.bind(this);
-        this._pc.onconnectionstatechange = this._onConnectionStateChange.bind(this);
+        this._pc.onicecandidate = this.#_onIceCandidate.bind(this);
+        this._pc.ondatachannel = this.#_onDataChannel.bind(this);
+        this._pc.onconnectionstatechange = this.#_onConnectionStateChange.bind(this);
 
         this._signal = new WebSocket(url);
         this._signal.onopen = this.#_onSignalOpen.bind(this);
@@ -193,7 +193,7 @@ class PeerConnection extends EventBus {
         this.logerror(`[webrtc/pc] failed to create session description: '${error.toString()}'`);
     }
 
-    async _onConnectionStateChange(_event) {
+    async #_onConnectionStateChange(_event) {
         this.log(`[webrtc/pc] connection state changed '${this._pc.connectionState}' / '${this._pc.iceConnectionState}'`);
         if (this._pc.connectionState === 'connected' && this._pc.iceConnectionState === 'connected') {
             this._signal.close();
@@ -203,7 +203,7 @@ class PeerConnection extends EventBus {
     /*
         ICE Candidate events
     */
-    async _onIceCandidate(event) {
+    async #_onIceCandidate(event) {
         if (this._pc.remoteDescription !== null) {
             try {
                 await this._pc
@@ -243,21 +243,21 @@ class PeerConnection extends EventBus {
 
     /* -----------------------------------------------------------------------*/
     _subscribeToDataChannelEvents(dc) {
-        dc.onclose = this._onDataChannelClose.bind(this);
-        dc.onerror = this._onDataChannelError.bind(this);
+        dc.onclose = this.#_onDataChannelClose.bind(this);
+        dc.onerror = this.#_onDataChannelError.bind(this);
         if (dc.label === 'text') {
-            dc.onopen = this._onDataChannelTextOpen.bind(this);
-            dc.onmessage = this._onDataChannelText.bind(this);
+            dc.onopen = this.#_onDataChannelTextOpen.bind(this);
+            dc.onmessage = this.#_onDataChannelText.bind(this);
         } else if (dc.label === 'file') {
-            dc.onopen = this._onDataChannelFileOpen.bind(this);
-            dc.onmessage = this._onDataChannelFile.bind(this);
+            dc.onopen = this.#_onDataChannelFileOpen.bind(this);
+            dc.onmessage = this.#_onDataChannelFile.bind(this);
         }
     }
 
     /*
         Data channel events
     */
-    async _onDataChannel(event) {
+    async #_onDataChannel(event) {
         let dc = event.channel;
         this._subscribeToDataChannelEvents(dc);
         this.log(`[webrtc/dc] data channel received: ${dc.label}`);
@@ -269,21 +269,21 @@ class PeerConnection extends EventBus {
         }
     }
 
-    async _onDataChannelClose(event) {
+    async #_onDataChannelClose(_event) {
         if (this._textDC.readyState !== 'open') {
             this.emit('onpeerdisconnected', {status: this._textDC.readyState});
         }
         this.log(`[webrtc/dc] data channel closed (user closed: ${this._userClosed})`);
     }
 
-    async _onDataChannelError(event) {
+    async #_onDataChannelError(event) {
         if (this._textDC.readyState !== 'open') {
             this.emit('onpeerdisconnected', {status: this._textDC.readyState});
         }
         this.logerror(`[webrtc/dc] dc error occurred: '${event.error}'`);
     }
 
-    async _onDataChannelText(event) {
+    async #_onDataChannelText(event) {
         let msg = JSON.parse(event.data);
         if (msg.data.file) {
             this.emit('onpeerfilemetadata', {id: msg.id, data: msg.data.file});
@@ -294,7 +294,7 @@ class PeerConnection extends EventBus {
         this.log(`[webrtc/tc] message received: '${event.data}'`);
     }
 
-    async _onDataChannelFile(event) {
+    async #_onDataChannelFile(event) {
         if (this._textDC.readyState === 'open') {
             this.emit('onpeerfile', {data: event.data});
         }
@@ -302,12 +302,12 @@ class PeerConnection extends EventBus {
         this.log(`[webrtc/fc] file content received with byte size: '${event.data.byteLength}'`);
     }
 
-    async _onDataChannelTextOpen(_event) {
+    async #_onDataChannelTextOpen(_event) {
         this.emit('onpeerconnected', {status: this._textDC.readyState});
         this.log('[webrtc/tc] text channel open');
     }
 
-    async _onDataChannelFileOpen(_event) {
+    async #_onDataChannelFileOpen(_event) {
         this.log('[webrtc/fc] file channel open');
     }
 
@@ -325,10 +325,10 @@ class PeerConnection extends EventBus {
 class Caller extends PeerConnection {
     constructor(signal, configuration, dataChannelLabel, ed, debug = false) {
         super('caller', signal, configuration, dataChannelLabel, ed, debug);
-        this._signal.onmessage = this.onmessage.bind(this);
+        this._signal.onmessage = this.#onmessage.bind(this);
     }
 
-    async onmessage(event) {
+    async #onmessage(event) {
         if (this._debug) {
             this.log(`[signal] received: '${event.data}'`);
         }
@@ -339,7 +339,7 @@ class Caller extends PeerConnection {
             switch(signalMsg.state) {
                 case 'ready':
                     this.emit('onsignalmessage', {status: 'ready'});
-                    this.dial();
+                    this.#dial();
                     this._roomIsFull = true;
                     break;
                 case 'wait':
@@ -351,26 +351,25 @@ class Caller extends PeerConnection {
 
         if (signalMsg.desc) {
             const desc = await this._locksmith.decrypt(signalMsg.desc, signalMsg.nonce);
-            await this.accept(desc);
+            await this.#accept(desc);
             return
         }
 
         this._onSignalMessage(signalMsg);
     }
 
-    async createTextDC() {
+    async #createTextDC() {
         // create text data channel
         this._textDC = this._pc.createDataChannel('text', {ordered: true});
         this._subscribeToDataChannelEvents(this._textDC);
     }
 
-    async dial() {
+    async #dial() {
         if (this._debug) {
             this.log(`[webrtc/tc] data channel created: '${this._room}'`);
         }
 
-        await this.createTextDC();
-
+        await this.#createTextDC();
 
         await this._pc.createOffer().then(
             this._onSession.bind(this),
@@ -387,7 +386,7 @@ class Caller extends PeerConnection {
         this._sendSignal(signalMsgOffer);
     }
 
-    async accept(answer) {
+    async #accept(answer) {
         let desc = new RTCSessionDescription(JSON.parse(answer));
         await this._pc.setRemoteDescription(desc);
         for (const candidate of this._candidates) {
@@ -410,10 +409,10 @@ class Caller extends PeerConnection {
 class Callee extends PeerConnection {
     constructor(signal, configuration, dataChannelLabel, ed, debug = false) {
         super('callee', signal, configuration, dataChannelLabel, ed, debug);
-        this._signal.onmessage = this.onmessage.bind(this);
+        this._signal.onmessage = this.#onmessage.bind(this);
     }
 
-    async onmessage(event) {
+    async #onmessage(event) {
         if (this._debug) {
             this.log(`[signal] received: ${event.data}`);
         }
@@ -437,14 +436,14 @@ class Callee extends PeerConnection {
         // handle description
         if (signalMsg.desc) {
             const desc = await this._locksmith.decrypt(signalMsg.desc, signalMsg.nonce);
-            await this.answer(desc);
+            await this.#answer(desc);
             return;
         }
 
         this._onSignalMessage(signalMsg);
     }
 
-    async answer(offer) {
+    async #answer(offer) {
         let desc = new RTCSessionDescription(JSON.parse(offer));
         await this._pc.setRemoteDescription(desc);
         await this._pc.createAnswer().then(
