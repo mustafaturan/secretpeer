@@ -11,7 +11,7 @@ let cpin = getEl('cpin');
 let ccword1 = getEl('ccword1');
 let ccword2 = getEl('ccword2');
 let ccpin = getEl('ccpin');
-let notification = getEl('notification');
+let notifications = getEl('notifications');
 
 let keys = [];
 let roomDigest;
@@ -135,15 +135,16 @@ message.addEventListener('keydown', function(event) {
 });
 
 async function notify(msg) {
-    notification.classList.add('active');
-    notification.innerText = msg;
     if (_debug) {
         console.log('[notify] ', msg);
     }
+    let notification = createEl('div');
+    notification.classList.add('notification');
+    notification.innerText = msg;
+    notifications.appendChild(notification);
     setTimeout(function(){
-        notification.classList.remove('active');
-        notification.innerText = '';
-    },2000);
+        notifications.removeChild(notification);
+    },4000);
 }
 
 async function subscribeToPeerEvents() {
