@@ -150,7 +150,7 @@ class PeerConnection extends EventBus {
     }
 
     async sendFile(bin) {
-        if (this._fileDC  && this._fileDC.readyState === 'open') {
+        if (this._fileDC && this._fileDC.readyState === 'open') {
             this._fileDC.send(bin);
         } else {
             throw new Error(`[webrtc/fc] readystate: ${this._fileDC ? this._fileDC.readyState : 'undefined'}`);
@@ -174,6 +174,7 @@ class PeerConnection extends EventBus {
 
     async createFileDC() {
         this._fileDC = this._pc.createDataChannel('file', {ordered: true});
+        this._fileDC.binaryType = 'arraybuffer';
         this._subscribeToDataChannelEvents(this._fileDC);
     }
 
@@ -280,6 +281,7 @@ class PeerConnection extends EventBus {
             this._textDC = dc;
         } else if (dc.label === 'file') {
             this._fileDC = dc;
+            this._fileDC.binaryType = 'arraybuffer';
         }
     }
 
