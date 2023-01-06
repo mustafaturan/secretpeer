@@ -193,7 +193,7 @@ class PeerConnection extends EventBus {
             state = this._pc.connectionState ? this._pc.connectionState : this._pc.iceConnectionState;
         }
         if (state === 'conected' && this._textDC !== undefined && this._textDC !== null && this._textDC.readyState !== 'open') {
-            state = 'waiting data channel'
+            state = 'waiting data channel';
         }
         return state ;
     }
