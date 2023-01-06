@@ -115,17 +115,6 @@ message.addEventListener('keydown', function(event) {
             showHide('help');
             keys = KeyMaker.random();
         } else {
-            if (peer === null || peer === undefined) {
-                notify('Peer connection is not established');
-                throw new Error('peer is not initialized');
-            }
-            if (!peer.isConnected && statusText.innerText === 'connected') {
-                statusText.innerText = 'disconnected';
-            }
-            if (statusText.innerText !== 'connected') {
-                notify(statusText.innerText);
-                throw new Error(`connection state ${statusText.innerText}`);
-            }
             send(msg);
         }
         main.scrollTop = main.scrollHeight;
@@ -322,6 +311,15 @@ function askFile() {
 }
 
 function send(msg) {
+    if (peer === null || peer === undefined) {
+        notify('Peer connection is not established');
+        throw new Error('peer is not initialized');
+    }
+    if (!peer.isConnected) {
+        statusText.innerText = peer.connectionState;
+        notify(peer.connectionState);
+        throw new Error(`trying to send on connection state ${peer.connectionState}`);
+    }
     const id = newID();
     peer.sendText({id: id, data: msg});
     messages.appendChild(buildNode('message-outgoing', id, msg));

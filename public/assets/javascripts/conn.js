@@ -188,6 +188,13 @@ class PeerConnection extends EventBus {
         return false;
     }
 
+    get connectionState() {
+        if (this._pc !== null && this._pc !== undefined) {
+            return this._pc.connectionState;
+        }
+        return 'disconnected';
+    }
+
     async _onSession(desc) {
         await this._pc.setLocalDescription(desc);
         this.log(`[webrtc/pc] local description set to: \n${desc.sdp}`);
