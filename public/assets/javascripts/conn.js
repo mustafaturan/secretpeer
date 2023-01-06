@@ -167,7 +167,9 @@ class PeerConnection extends EventBus {
         if (this._fileDC !== undefined && this._fileDC !== null && this._fileDC.readyState === 'open') {
             this._fileDC.close();
         }
-        this._pc.close();
+        if (this._pc !== undefined && this._pc !== null) {
+            this._pc.close();
+        }
     }
 
     async createFileDC() {

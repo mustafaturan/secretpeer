@@ -30,7 +30,6 @@ window.onload = (_event) => {
     }
 
     message.focus();
-    generate();
 };
 
 window.alert = (msg) => {
@@ -48,209 +47,96 @@ message.addEventListener('keydown', function(event) {
     if (event.code === 'Enter') {
         event.preventDefault();
         var msg = message.innerText.trim();
-        if (msg === '') {
-            msg.focus();
-        } else if (msg.startsWith('/help')) {
-            showHide('help');
-        } else if (msg.startsWith('/privacy')) {
-            showHide('privacy');
-        } else if (msg.startsWith('/file')) {
-            askFile();
-        } else if (msg.startsWith('/clean') || msg.startsWith('/clear')) {
-            fileBuffer = [];
-            fileMetadata = {};
-            fileSize = 0;
-            messages.innerHTML = '';
-            showHide('messages');
-            generate();
-        } else if (msg.startsWith('/create')) {
-            fileBuffer = [];
-            fileMetadata = {};
-            fileSize = 0;
-            messages.innerHTML = setup.innerHTML;
-            showHide('messages');
-            statusText.innerText = 'initializing signal';
-            prepare().then((result) => {
-                [ls, room] = result;
-                setTimeout(function() {
-                    dial(ls, room);
-                    statusText.innerText = 'waiting participant';
-                }, 15000);
-            });
-        } else if (msg.startsWith('/join')) {
-            const joinKeys = msg.replace(/\s+/g, ' ').trim().split(' ').slice(1,4);
-            if (!words.includes(joinKeys[0])) {
-                notify(`Invalid word#1: ${joinKeys[0]}`);
-                throw new Error(`invalid word: ${word1}`);
-            }
-            if (!words.includes(joinKeys[1])) {
-                notify(`Invalid word#2: ${joinKeys[1]}`);
-                throw new Error(`invalid word: ${joinKeys[1]}`);
-            }
-            if (!(!isNaN(parseFloat(joinKeys[2])) && isFinite(joinKeys[2])) || joinKeys[2].length !== 6) {
-                notify(`Invalid pin (must 6 digit number): ${joinKeys[2]}`);
-                throw new Error(`pincode must be a 6 digit number! ${joinKeys[2]}`);
-            }
-
-            fileBuffer = [];
-            fileMetadata = {};
-            fileSize = 0;
-            messages.innerHTML = '';
-            showHide('messages');
-            prepare(joinKeys).then((result) => {
-                [ls, room] = result;
-                answer(ls, room);
-                statusText.innerText = 'waiting participant';
-            });
-        } else if (msg.startsWith('/leave') || msg.startsWith('/quit')) {
-            fileBuffer = [];
-            fileMetadata = {};
-            fileSize = 0;
-            messages.innerHTML = '';
-            if (peer !== null && peer !== undefined) {
-                peer.hangup();
-                statusText.innerText = 'disconnected';
-            }
-
-            showHide('help');
-            keys = KeyMaker.random();
+        if (msg.startsWith('/')) {
+            let cmd = msg.replace(/\s+/g, ' ').trim().split(' ');
+            handleCommand(cmd[0].substring(1), cmd.slice(1));
         } else {
-            send(msg);
+            cmdSend(msg);
         }
-        main.scrollTop = main.scrollHeight;
         message.innerText = '';
         message.focus();
     }
 });
 
-async function notify(msg) {
-    if (_debug) {
-        console.log('[notify] ', msg);
+async function handleCommand(cmd, args) {
+    switch(cmd) {
+        case 'help':
+            showHide('help');
+            break;
+        case 'privacy':
+            showHide('privacy');
+            break;
+        case 'clean':
+        case 'clear':
+            cmdClean();
+            break;
+        case 'file':
+            cmdFile();
+            break;
+        case 'create':
+            cmdCreate();
+            break;
+        case 'join':
+            cmdJoin(args);
+            break;
+        case 'leave':
+        case 'quit':
+        case 'exit':
+            location.reload();
+            break;
+        default:
+            notify(`unknown command! ${cmd}`);
     }
-    let notification = createEl('div');
-    notification.classList.add('notification');
-    notification.innerText = msg;
-    notifications.appendChild(notification);
-    setTimeout(function(){
-        notifications.removeChild(notification);
-    },4000);
 }
 
-async function subscribeToPeerEvents() {
-    /*Messaging*/
-    peer.on('onpeerconnected', function(_event) {
-        statusText.innerText = 'connected';
-        notify('Connected to the peer');
-    });
-    peer.on('onpeerdisconnected', function(_event) {
-        statusText.innerText = peer && peer.isConnected ? 'connected' : 'disconnected';
-        if (!peer || !peer.isConnected) {
-            notify('Disconnected from the peer');
-        }
-    });
-    peer.on('onpeermessage', function(event) {
-        receive(event.id, event.data);
-    });
-    peer.on('onpeerfilemetadata', function(event) {
-        receiveFileMetadata(event.id, event.data);
-    });
-    peer.on('onpeerfile', function(event) {
-        receiveFile(event.data);
-    });
+async function cmdClean() {
+    fileBuffer = [];
+    fileMetadata = {};
+    fileSize = 0;
+    messages.innerHTML = '';
+    showHide('messages');
+}
 
-    /*Signal*/
-    peer.on('onsignalopen', function(_event) {
-        notify('Secret room is created, waiting another participant to join!');
-    })
-    peer.on('onsignalclose', function(event) {
-        if (!peerSignalReceived && !peer.isConnected) {
-            notify('Nobody joined to room, signal is closed!');
-            statusText.innerText = 'disconnected';
-            peer.hangup();
-            peer = null;
-        } else if(peerSignalReceived && !peer.isConnected) {
-            notify('Could not establish peer to peer connection');
-            statusText.innerText = 'disconnected';
-            peer.hangup();
-            peer = null;
-            peerSignalReceived = false;
-        }
-    });
-    peer.on('onsignalerror', function(event) {
-        notify('Something went wrong on signaling, please rejoin');
-        statusText.innerText = 'disconnected';
-        peer.hangup();
-        peer = null;
-    });
-    peer.on('onsignalmessage', function(event) {
-        if (event.status === 'wait') {
-            notify('Waiting a participant to join to the room');
-        } else if (event.status === 'ready') {
-            notify('A participant joined to the room');
-            statusText.innerText = 'connecting';
-            peerSignalReceived = true;
-        }
+async function cmdCreate() {
+    await cmdClean();
+    generate().then(() => {
+        messages.innerHTML = setup.innerHTML;
+        statusText.innerText = 'initializing signal';
+        prepare().then((result) => {
+            [ls, room] = result;
+            setTimeout(function() {
+                dial(ls, room);
+                statusText.innerText = 'waiting participant';
+            }, 15000);
+        });
     });
 }
 
-async function generate() {
-    keys = KeyMaker.random();
-    cword1.innerText = keys[0];
-    cword2.innerText = keys[1];
-    cpin.innerText = keys[2];
-    ccword1.innerText = keys[0];
-    ccword2.innerText = keys[1];
-    ccpin.innerText = keys[2];
-}
-
-async function prepare(joinKeys = keys) {
-    let ls;
-    try {
-        ls = new Locksmith(joinKeys[0], joinKeys[1], joinKeys[2]);
-    } catch (e) {
-        notify(`Could not init encryption library!`);
-        statusText.innerText = 'failed';
-        throw new Error(`Could not init encryption library: ${e.toString()}`);
+async function cmdJoin(args) {
+    if (!words.includes(args[0])) {
+        notify(`Invalid word#1: ${args[0]}`);
+        throw new Error(`invalid word: ${args[0]}`);
     }
-    if (ls === null) {
-        return
+    if (!words.includes(args[1])) {
+        notify(`Invalid word#2: ${args[1]}`);
+        throw new Error(`invalid word: ${args[1]}`);
+    }
+    if (!(!isNaN(parseFloat(args[2])) && isFinite(args[2])) || args[2].length !== 6) {
+        notify(`Invalid pin (must 6 digit number): ${args[2]}`);
+        throw new Error(`pincode must be a 6 digit number! ${args[2]}`);
     }
 
-    if (peer !== undefined && peer !== null) {
-        peer.hangup();
-        peer = null;
-        peerSignalReceived = false;
-    }
-    let room;
-    try {
-        room = await ls.digest();
-    } catch(e) {
-        notify(`Could not init encryption library!`);
-        throw new Error(`Could not init encryption library: ${e.toString()}`);
-    }
-
-    return [ls, room];
+    await cmdClean();
+    prepare(args.slice(0,3)).then((result) => {
+        [ls, room] = result;
+        setTimeout(function() {
+            answer(ls, room);
+            statusText.innerText = 'waiting participant';
+        }, 1000);
+    });
 }
 
-async function dial(ls, room) {
-    peer = new Caller(wsServiceURL, configuration, room, ls, _debug);
-    await subscribeToPeerEvents();
-}
-
-async function answer(ls, room) {
-    peer = new Callee(wsServiceURL, configuration, room, ls, _debug);
-    await subscribeToPeerEvents();
-    main.scrollTop = main.scrollHeight;
-}
-
-function showHide(show) {
-    for (let n of getEl('main-content').childNodes) {
-        n.hidden = true;
-    }
-    getEl(show).hidden = false;
-}
-
-function askFile() {
+async function cmdFile() {
     let io = createEl('input');
     io.type = 'file';
 
@@ -310,7 +196,10 @@ function askFile() {
     io.click();
 }
 
-function send(msg) {
+async function cmdSend(msg) {
+    if (msg === '') {
+        return;
+    }
     if (peer === null || peer === undefined) {
         notify('Peer connection is not established');
         throw new Error('peer is not initialized');
@@ -324,6 +213,132 @@ function send(msg) {
     peer.sendText({id: id, data: msg});
     messages.appendChild(buildNode('message-outgoing', id, msg));
     main.scrollTop = main.scrollHeight;
+}
+
+async function notify(msg) {
+    if (_debug) {
+        console.log('[notify] ', msg);
+    }
+    let notification = createEl('div');
+    notification.classList.add('notification');
+    notification.innerText = msg;
+    notifications.appendChild(notification);
+    setTimeout(function(){
+        notifications.removeChild(notification);
+    },4000);
+}
+
+async function subscribeToPeerEvents() {
+    /*Messaging*/
+    peer.on('onpeerconnected', function(_event) {
+        statusText.innerText = 'connected';
+        notify('Connected to the peer');
+    });
+    peer.on('onpeerdisconnected', function(_event) {
+        statusText.innerText = peer && peer.isConnected ? 'connected' : 'disconnected';
+        if (!peer || !peer.isConnected) {
+            notify('Disconnected from the peer');
+        }
+    });
+    peer.on('onpeermessage', function(event) {
+        receive(event.id, event.data);
+    });
+    peer.on('onpeerfilemetadata', function(event) {
+        receiveFileMetadata(event.id, event.data);
+    });
+    peer.on('onpeerfile', function(event) {
+        receiveFile(event.data);
+    });
+
+    /*Signal*/
+    peer.on('onsignalopen', function(_event) {
+        notify('Secret room is created, waiting another participant to join!');
+    })
+    peer.on('onsignalclose', function(event) {
+        if (peer && !peer.isConnected) {
+            if (!peerSignalReceived) {
+                notify('Nobody joined to room, signal is closed!');
+            } else {
+                notify('Could not establish peer to peer connection');
+            }
+            statusText.innerText = 'disconnected';
+            peer.hangup();
+            peer = null;
+        }
+    });
+    peer.on('onsignalerror', function(event) {
+        notify('Something went wrong on signaling, please rejoin');
+        statusText.innerText = 'disconnected';
+        peer.hangup();
+        peer = null;
+    });
+    peer.on('onsignalmessage', function(event) {
+        if (event.status === 'wait') {
+            notify('Waiting a participant to join to the room');
+        } else if (event.status === 'ready') {
+            notify('A participant joined to the room');
+            handleCommand('clear');
+            statusText.innerText = 'connecting';
+            peerSignalReceived = true;
+        }
+    });
+}
+
+async function generate() {
+    keys = KeyMaker.random();
+    cword1.innerText = keys[0];
+    cword2.innerText = keys[1];
+    cpin.innerText = keys[2];
+    ccword1.innerText = keys[0];
+    ccword2.innerText = keys[1];
+    ccpin.innerText = keys[2];
+}
+
+async function prepare(joinKeys = keys) {
+    let ls;
+    try {
+        ls = new Locksmith(joinKeys[0], joinKeys[1], joinKeys[2]);
+    } catch (e) {
+        notify(`Could not init encryption library!`);
+        statusText.innerText = 'failed';
+        throw new Error(`Could not init encryption library: ${e.toString()}`);
+    }
+    if (ls === null) {
+        return
+    }
+
+    if (peer !== undefined && peer !== null) {
+        await peer.hangup();
+        peer = null;
+    }
+    peerSignalReceived = false;
+    let room;
+    try {
+        room = await ls.digest();
+    } catch(e) {
+        notify(`Could not init encryption library!`);
+        throw new Error(`Could not init encryption library: ${e.toString()}`);
+    }
+
+    return [ls, room];
+}
+
+async function dial(ls, room) {
+    peer = new Caller(wsServiceURL, configuration, room, ls, _debug);
+    await subscribeToPeerEvents();
+}
+
+async function answer(ls, room) {
+    peer = new Callee(wsServiceURL, configuration, room, ls, _debug);
+    await subscribeToPeerEvents();
+    main.scrollTop = main.scrollHeight;
+}
+
+async function showHide(show) {
+    for (let n of getEl('main-content').childNodes) {
+        n.hidden = true;
+    }
+    getEl(show).hidden = false;
 }
 
 function receiveFileMetadata(id, metadata) {
