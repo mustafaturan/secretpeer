@@ -142,7 +142,7 @@ class PeerConnection extends EventBus {
     }
 
     async sendText(text) {
-        if (this._textDC !== undefined && this._textDC !== null && this._textDC.readyState === 'open') {
+        if (this._textDC && this._textDC.readyState === 'open') {
             this._textDC.send(JSON.stringify(text));
         } else {
             throw new Error(`[webrtc/tc] readystate: ${this._textDC ? this._textDC.readyState : 'undefined'}`);
@@ -150,7 +150,7 @@ class PeerConnection extends EventBus {
     }
 
     async sendFile(bin) {
-        if (this._fileDC !== undefined && this._fileDC !== null && this._fileDC.readyState === 'open') {
+        if (this._fileDC  && this._fileDC.readyState === 'open') {
             this._fileDC.send(bin);
         } else {
             throw new Error(`[webrtc/fc] readystate: ${this._fileDC ? this._fileDC.readyState : 'undefined'}`);
@@ -161,13 +161,13 @@ class PeerConnection extends EventBus {
         if (this._signal.readyState === WebSocket.OPEN) {
             this._signal.close();
         }
-        if (this._textDC !== undefined && this._textDC !== null && this._textDC.readyState === 'open') {
+        if (this._textDC && this._textDC.readyState === 'open') {
             this._textDC.close();
         }
-        if (this._fileDC !== undefined && this._fileDC !== null && this._fileDC.readyState === 'open') {
+        if (this._fileDC && this._fileDC.readyState === 'open') {
             this._fileDC.close();
         }
-        if (this._pc !== undefined && this._pc !== null) {
+        if (this._pc) {
             this._pc.close();
         }
     }
@@ -178,7 +178,7 @@ class PeerConnection extends EventBus {
     }
 
     async destroyFileDC() {
-        if (this._fileDC !== undefined && this._fileDC !== null && this._fileDC.readyState === 'open') {
+        if (this._fileDC && this._fileDC.readyState === 'open') {
             this._fileDC.close();
         }
     }
@@ -192,7 +192,7 @@ class PeerConnection extends EventBus {
         if (this._pc !== null && this._pc !== undefined) {
             state = this._pc.connectionState ? this._pc.connectionState : this._pc.iceConnectionState;
         }
-        if (state === 'conected' && this._textDC !== undefined && this._textDC !== null && this._textDC.readyState !== 'open') {
+        if (state === 'conected' && (!this._textDC || this._textDC.readyState !== 'open')) {
             state = 'waiting data channel';
         }
         return state;

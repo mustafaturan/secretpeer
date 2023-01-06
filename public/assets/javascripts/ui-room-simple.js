@@ -200,7 +200,7 @@ async function cmdSend(msg) {
     if (msg === '') {
         return;
     }
-    if (peer === null || peer === undefined) {
+    if (!peer) {
         notify('Peer connection is not established');
         throw new Error('peer is not initialized');
     }
