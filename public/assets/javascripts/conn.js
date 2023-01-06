@@ -195,7 +195,7 @@ class PeerConnection extends EventBus {
         if (state === 'conected' && this._textDC !== undefined && this._textDC !== null && this._textDC.readyState !== 'open') {
             state = 'waiting data channel';
         }
-        return state ;
+        return state;
     }
 
     async _onSession(desc) {
