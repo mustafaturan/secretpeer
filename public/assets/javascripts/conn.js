@@ -184,17 +184,18 @@ class PeerConnection extends EventBus {
     }
 
     get isConnected() {
-        if (this._textDC !== undefined && this._textDC !== null && this._pc !== null && this._pc !== undefined) {
-            return this._textDC.readyState === 'open' && this._pc.connectionState == 'connected'
-        }
-        return false;
+        return this.connectionState === 'connected';
     }
 
     get connectionState() {
+        let state = 'disconnected';
         if (this._pc !== null && this._pc !== undefined) {
-            return this._pc.connectionState;
+            state = this._pc.connectionState ? this._pc.connectionState : this._pc.iceConnectionState;
         }
-        return 'disconnected';
+        if (state === 'conected' && this._textDC !== undefined && this._textDC !== null && this._textDC.readyState !== 'open') {
+            state = 'waiting data channel'
+        }
+        return state ;
     }
 
     async _onSession(desc) {
@@ -208,7 +209,7 @@ class PeerConnection extends EventBus {
 
     async #_onConnectionStateChange(_event) {
         this.log(`[webrtc/pc] connection state changed '${this._pc.connectionState}' / '${this._pc.iceConnectionState}'`);
-        if (this._pc.connectionState === 'connected' && this._pc.iceConnectionState === 'connected') {
+        if (this.isConnected) {
             this._signal.close();
         }
     }
