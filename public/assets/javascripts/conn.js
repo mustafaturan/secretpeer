@@ -189,7 +189,7 @@ class PeerConnection extends EventBus {
 
     get connectionState() {
         let state = 'disconnected';
-        if (this._pc !== null && this._pc !== undefined) {
+        if (this._pc) {
             state = this._pc.connectionState ? this._pc.connectionState : this._pc.iceConnectionState;
         }
         if (state === 'conected' && (!this._textDC || this._textDC.readyState !== 'open')) {
@@ -233,7 +233,7 @@ class PeerConnection extends EventBus {
             this._candidates.push(event.candidate);
         }
 
-        if (event.candidate !== null && event.candidate !== undefined && event.candidate.candidate !== null) {
+        if (event.candidate && event.candidate.candidate !== null) {
             const encrypted = await this._locksmith.encrypt(JSON.stringify(event.candidate));
             let signalMsgCandidate = {
                 room:  this._room,
