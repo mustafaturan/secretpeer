@@ -338,8 +338,8 @@ class PeerConnection extends EventBus {
 }
 
 class Caller extends PeerConnection {
-    constructor(signal, configuration, dataChannelLabel, ed, debug = false) {
-        super('caller', signal, configuration, dataChannelLabel, ed, debug);
+    constructor(signal, configuration, room, ls, debug = false) {
+        super('caller', signal, configuration, room, ls, debug);
         this._signal.onmessage = this.#onmessage.bind(this);
     }
 
@@ -422,8 +422,8 @@ class Caller extends PeerConnection {
 }
 
 class Callee extends PeerConnection {
-    constructor(signal, configuration, dataChannelLabel, ed, debug = false) {
-        super('callee', signal, configuration, dataChannelLabel, ed, debug);
+    constructor(signal, configuration, room, ls, debug = false) {
+        super('callee', signal, configuration, room, ls, debug);
         this._signal.onmessage = this.#onmessage.bind(this);
     }
 
