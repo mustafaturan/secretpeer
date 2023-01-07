@@ -14,12 +14,11 @@ let ccpin = getEl('ccpin');
 let notifications = getEl('notifications');
 
 let keys = [];
-let roomDigest;
 let peer;
 
 let fileBuffer = [];
-let fileSize = 0;
 let fileMetadata = {};
+let fileSize = 0;
 
 let peerSignalReceived = false;
 
@@ -61,10 +60,10 @@ message.addEventListener('keydown', function(event) {
 async function handleCommand(cmd, args) {
     switch(cmd) {
         case 'help':
-            showHide('help');
+            cmdHelp();
             break;
         case 'privacy':
-            showHide('privacy');
+            cmdPrivacy();
             break;
         case 'clean':
         case 'clear':
@@ -82,7 +81,10 @@ async function handleCommand(cmd, args) {
         case 'leave':
         case 'quit':
         case 'exit':
-            location.reload();
+            cmdLeave();
+            break;
+        case 'debug':
+            cmdDebug();
             break;
         default:
             notify(`unknown command! ${cmd}`);
@@ -137,6 +139,10 @@ async function cmdJoin(args) {
 }
 
 async function cmdFile() {
+    if (!peer || !peer.isConnected) {
+        notify('To send file, you need to establish connection to a peer!');
+        throw new Error('peer connection is not established!');
+    }
     let io = createEl('input');
     io.type = 'file';
 
@@ -215,9 +221,35 @@ async function cmdSend(msg) {
     main.scrollTop = main.scrollHeight;
 }
 
-async function notify(msg) {
-    if (_debug) {
-        console.log('[notify] ', msg);
+async function cmdLeave() {
+    cmdClean();
+    if (peer) {
+        await peer.hangup();
+    }
+    notify('Please wait, reloading the window in a second!');
+    setTimeout(function(){
+        location.reload();
+    },1000);
+}
+
+async function cmdDebug() {
+    _debug = true;
+    if (peer) {
+        peer._debug = _debug;
+    }
+}
+
+async function cmdHelp() {
+    showHide('help');
+}
+
+async function cmdPrivacy() {
+    showHide('privacy');
+}
+
+async function notify(msg, log = _debug) {
+    if (log) {
+        console.log(`[notify] ${msg}`);
     }
     let notification = createEl('div');
     notification.classList.add('notification');
@@ -231,14 +263,16 @@ async function notify(msg) {
 async function subscribeToPeerEvents() {
     /*Messaging*/
     peer.on('onpeerconnected', function(_event) {
+        if (statusText.innerText !== 'connected') {
+            notify('Connected to the peer');
+        }
         statusText.innerText = 'connected';
-        notify('Connected to the peer');
     });
     peer.on('onpeerdisconnected', function(_event) {
-        statusText.innerText = peer && peer.isConnected ? 'connected' : 'disconnected';
-        if (!peer || !peer.isConnected) {
+        if ((!peer || !peer.isConnected) && statusText.innerText !== 'disconnected') {
             notify('Disconnected from the peer');
         }
+        statusText.innerText = peer && peer.isConnected ? 'connected' : 'disconnected';
     });
     peer.on('onpeermessage', function(event) {
         receive(event.id, event.data);
@@ -299,7 +333,7 @@ async function prepare(joinKeys = keys) {
     try {
         ls = new Locksmith(joinKeys[0], joinKeys[1], joinKeys[2]);
     } catch (e) {
-        notify(`Could not init encryption library!`);
+        notify('Could not init encryption library!');
         statusText.innerText = 'failed';
         throw new Error(`Could not init encryption library: ${e.toString()}`);
     }
@@ -316,7 +350,7 @@ async function prepare(joinKeys = keys) {
     try {
         room = await ls.digest();
     } catch(e) {
-        notify(`Could not init encryption library!`);
+        notify('Could not init encryption library!');
         throw new Error(`Could not init encryption library: ${e.toString()}`);
     }
 
@@ -402,10 +436,6 @@ function buildTime() {
     return node;
 }
 
-function pad2(number) {
-    return (number < 10 ? '0' : '') + number
-}
-
 function buildContent(id, msg) {
     var node = createEl('div');
     node.classList.add('content')
@@ -414,12 +444,8 @@ function buildContent(id, msg) {
     return node;
 }
 
-function getEl(id) {
-    return document.getElementById(id);
-}
-
-function createEl(tag) {
-    return document.createElement(tag);
+function pad2(number) {
+    return (number < 10 ? '0' : '') + number
 }
 
 function newID() {
@@ -449,4 +475,12 @@ function humanFileSize(bytes) {
 
 
     return bytes.toFixed(dp) + ' ' + units[u];
+}
+
+function getEl(id) {
+    return document.getElementById(id);
+}
+
+function createEl(tag) {
+    return document.createElement(tag);
 }

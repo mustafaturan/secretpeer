@@ -196,6 +196,9 @@ class PeerConnection extends EventBus {
         if (state === 'conected' && (!this._textDC || this._textDC.readyState !== 'open')) {
             state = 'waiting data channel';
         }
+        if (state === 'connected' && this._textDC && (this._textDC.readyState === 'closed' || this._textDC.readyState === 'closing')) {
+            state = this._textDC.readyState;
+        }
         return state;
     }
 
@@ -219,21 +222,6 @@ class PeerConnection extends EventBus {
         ICE Candidate events
     */
     async #_onIceCandidate(event) {
-        if (this._pc.remoteDescription !== null) {
-            try {
-                await this._pc
-                    .addIceCandidate(event.candidate)
-                    .then(
-                        this._onAddIceCandidateSuccess.bind(this),
-                        this._onAddIceCandidateError.bind(this)
-                    );
-            } catch (e) {
-                this.logerror(`[webrtc/pc] Error adding received ice candidate: '${e.toString()}'`);
-            }
-        } else {
-            this._candidates.push(event.candidate);
-        }
-
         if (event.candidate && event.candidate.candidate !== null) {
             const encrypted = await this._locksmith.encrypt(JSON.stringify(event.candidate));
             let signalMsgCandidate = {
