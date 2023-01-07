@@ -268,8 +268,10 @@ async function subscribeToPeerEvents() {
         }
         statusText.innerText = 'connected';
     });
-    peer.on('onpeerdisconnected', function(_event) {
-        if ((!peer || !peer.isConnected) && statusText.innerText !== 'disconnected') {
+    peer.on('onpeerdisconnected', function(event) {
+        if (event.status === 'failed') {
+            notify('Failed to establish connection to remote peer!');
+        } else if ((!peer || !peer.isConnected) && statusText.innerText !== 'disconnected') {
             notify('Disconnected from the peer');
         }
         statusText.innerText = peer && peer.isConnected ? 'connected' : 'disconnected';

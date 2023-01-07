@@ -67,6 +67,7 @@ class PeerConnection extends EventBus {
         this._pc.onicecandidate = this.#_onIceCandidate.bind(this);
         this._pc.ondatachannel = this.#_onDataChannel.bind(this);
         this._pc.onconnectionstatechange = this.#_onConnectionStateChange.bind(this);
+        this._pc.onnegotiationneeded = this.#onNegotiationNeeded.bind(this);
 
         this._signal = new WebSocket(url);
         this._signal.onopen = this.#_onSignalOpen.bind(this);
@@ -213,9 +214,19 @@ class PeerConnection extends EventBus {
 
     async #_onConnectionStateChange(_event) {
         this.log(`[webrtc/pc] connection state changed '${this._pc.connectionState}' / '${this._pc.iceConnectionState}'`);
-        if (this.isConnected) {
+        if (this._pc.connectionState === 'failed' ||
+            this._pc.connectionState === 'disconnected' ||
+            this._pc.iceConnectionState === 'failed' ||
+            this._pc.iceConnectionState === 'disconnected') {
+            this._signal.close();
+            this.emit('onpeerdisconnected', {status: this._pc.connectionState});
+        } else if (this.isConnected) {
             this._signal.close();
         }
+    }
+
+    async #onNegotiationNeeded(_event) {
+        this.log('on negotiation needed event received!')
     }
 
     /*
