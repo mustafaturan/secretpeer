@@ -1,17 +1,46 @@
+:root {
+    --body-bgc: #FFFFFF;
+    --body-font-family: sans-serif;
+
+    --header-bgc: #F7F9FB;
+    --header-bc: #EFEFEF;
+
+    --footer-bgc: #F7F9FB;
+    --footer-bc: #EFEFEF;
+
+    --title-c: #07C456;
+    --statuc-c: gray;
+    --content-editable-c: #847E7E;
+
+    --message-outgoing-bgc: #f0fEEF;
+    --message-outgoing-c: #222222;
+    --message-incoming-bgc: #EFEFEF;
+    --message-incoming-c: #222222;
+    --message-time-c: #847E7E;
+
+    --input-message-bgc: #FFFFFF;
+    --input-message-bc: #FFFFFF;
+
+    --setup-info-bc: #DA1818;
+
+    --notification-bgc: rgba(0,0,0,.6);
+    --notification-c: #FFFFFF;
+}
+
 html, body {
-    height: 100%
+    height: 100%;
 }
 
 body {
     padding: 0;
     margin: 0;
-    background-color: #FFFFFF;
-    font-family: sans-serif;
+    background-color: var(--body-bgc);
+    font-family: var(--body-font-family);
 }
 
 header {
-    background-color: #F7F9FB;
-    border-bottom: 1px solid #EFEFEF;
+    background-color: var(--header-bgc);
+    border-bottom: 1px solid var(--header-bc);
     height: 70px;
 }
 
@@ -21,14 +50,14 @@ main {
 }
 
 footer {
-    background-color: #F7F9FB;
-    border-top: 1px solid #EFEFEF;
+    background-color: var(--header-bgc);
+    border-top: 1px solid var(--footer-bc);
     height: 80px;
 }
 
 [contentEditable=true]:empty:not(:focus):before {
     content: attr(data-text);
-    color: #847e7e;
+    color: var(--content-editable-c);
 }
 
 [contentEditable=true]:focus {
@@ -53,7 +82,7 @@ footer {
 
 .title {
     font-size: 1em;
-    color: #07c456;
+    color: var(--title-c);
 }
 .status {
     font-size: 0.7em;
@@ -61,7 +90,7 @@ footer {
     position: relative;
     width: 100%;
     text-align: right;
-    color: gray;
+    color: var(--status-c);
 }
 .green {
     color: rgb(47, 150, 47);
@@ -77,7 +106,7 @@ footer {
 
 .message-time {
     padding-left: 10px;
-    color: #847e7e;
+    color: var(--message-time-c);
 }
 
 .messages {
@@ -89,15 +118,15 @@ footer {
     padding-bottom: 10px;
     margin-top: 0px;
     display: block;
-    background-color: #ffffff;
+    background-color: var(--body-bgc);
 }
 
 .message .message-outgoing {
     display: inline-block;
     padding: 8px 12px 8px 12px;
     margin: 0px;
-    background-color: #f0feef;
-    color: #222222;
+    background-color: var(--message-outgoing-bgc);
+    color: var(--message-outgoing-c);
     font-size: 0.83em;
     border-radius: 5px 5px 0px 5px;
     overflow-wrap: anywhere;
@@ -107,8 +136,8 @@ footer {
     display: inline-block;
     padding: 8px 12px 8px 12px;
     margin: 0px;
-    background-color: #efefef;
-    color: #222222;
+    background-color: var(--message-incoming-bgc);
+    color: var(--message-incoming-c);
     font-size: 0.83em;
     border-radius: 5px 5px 5px 0;
     overflow-wrap: anywhere;
@@ -123,9 +152,9 @@ footer {
 
 .input-message {
     padding: 10px;
-    background-color: #FFFFFF;
+    background-color: var(--input-message-bgc);
     border-radius: 5px;
-    border: 1px solid #FFFFFF;
+    border: 1px solid var(--input-message-bc);
     font-size: 0.8em;
 }
 
@@ -155,7 +184,7 @@ footer {
     font-size: 0.8em;
 }
 .setup-info {
-    border: 1px dashed red;
+    border: 1px dashed var(--setup-info-bc);
     padding: 3px;
 }
 
@@ -170,9 +199,9 @@ footer {
     width:100%;
     height:20px;
     box-sizing:border-box;
-    color:#ffffff;
+    color: var(--notification-c);
     text-align:center;
-    background:rgba(0,0,0,.6);
+    background: var(--notification-bgc);
     overflow:hidden;
     box-sizing:border-box;
     transition:height .2s;
