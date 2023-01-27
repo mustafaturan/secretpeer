@@ -35,11 +35,9 @@ class Locksmith {
             throw new Error(`pincode must be a 6 digit number! ${pin}`);
         }
 
-        this._word1 = word1;
-        this._word2 = word2;
-        this._pin = pin;
+        pin = parseInt(pin);
 
-        let nums = [
+        const nums = [
             words.indexOf(word1),
             words.indexOf(word2),
             pin
@@ -160,7 +158,7 @@ class Locksmith {
 	    let vals = new Uint8Array(size);
         for (var i = 0; i < bStr.length; i += 8) {
             for (var j = 0; j < 8; j++) {
-                vals[i] += (bStr[i+j] === '0' ? 0 : Math.pow(2, 7-j));
+                vals[i/8] += (bStr[i+j] === '0' ? 0 : Math.pow(2, 7-j));
             }
         }
 
