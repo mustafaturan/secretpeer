@@ -24,7 +24,8 @@ const english = {
     'n_peer_connection_needed_for_file_transfer': 'To send file, you need to establish connection to a peer!',
     'n_empty_file': 'Empty files can not be transfered',
     'n_unknown_command': 'Unknown command',
-    'n_debug_enabled': 'Debug mode enabled!'
+    'n_debug_enabled': 'Debug mode enabled!',
+    'n_hash_command': 'Hash command is written to input, press enter/return to apply',
 };
 
 let lang;

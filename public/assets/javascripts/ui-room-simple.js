@@ -13,6 +13,7 @@ let ccword1 = getEl('ccword1');
 let ccword2 = getEl('ccword2');
 let ccpin = getEl('ccpin');
 let notifications = getEl('notifications');
+let qrCode = getEl('qrcode');
 
 let keys = [];
 let peer;
@@ -23,6 +24,10 @@ let fileSize = 0;
 
 let peerSignalReceived = false;
 
+const pageURL = window.location.href.split('#')[0];
+
+let qr = new QRious({element: qrCode, value: pageURL});
+
 window.onload = (_event) => {
     if (window.location.protocol === 'http:' && !window.location.host.startsWith('localhost')) {
         window.location.protoco = 'https:';
@@ -30,6 +35,11 @@ window.onload = (_event) => {
     }
 
     message.focus();
+    let hashVal = window.location.href.split('#')[1];
+    if (hashVal !== undefined && hashVal !== '') {
+        message.innerText = '/' + decodeURI(hashVal);
+        notify(`${lang['n_hash_command']}: ${message.innerText}`);
+    }
 };
 
 message.addEventListener('paste', (event) => {
@@ -107,6 +117,7 @@ async function cmdClean() {
 async function cmdCreate() {
     await cmdClean();
     generate().then(() => {
+        qr.set({value: encodeURI(pageURL + '#j ' + keys.join(' '))});
         messages.innerHTML = setup.innerHTML;
         statusText.innerText = lang['status_initializing_signal'];
         prepare().then((result) => {
