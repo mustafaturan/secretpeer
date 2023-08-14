@@ -14,6 +14,7 @@ let ccword2 = getEl('ccword2');
 let ccpin = getEl('ccpin');
 let notifications = getEl('notifications');
 let qrCode = getEl('qrcode');
+let qrImage = getEl('qrimage');
 
 let keys = [];
 let peer;
@@ -26,7 +27,7 @@ let peerSignalReceived = false;
 
 const pageURL = window.location.href.split('#')[0];
 
-let qr = new QRious({element: qrCode, value: pageURL});
+let qr = new QRious({element: qrCode, value: pageURL, size: 256});
 
 window.onload = (_event) => {
     if (window.location.protocol === 'http:' && !window.location.host.startsWith('localhost')) {
@@ -118,6 +119,8 @@ async function cmdCreate() {
     await cmdClean();
     generate().then(() => {
         qr.set({value: encodeURI(pageURL + '#j ' + keys.join(' '))});
+        qrImage.innerHTML = '';
+        qrImage.appendChild(qr.image);
         messages.innerHTML = setup.innerHTML;
         statusText.innerText = lang['status_initializing_signal'];
         prepare().then((result) => {
