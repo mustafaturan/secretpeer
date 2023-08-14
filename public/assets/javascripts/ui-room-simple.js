@@ -27,7 +27,7 @@ let peerSignalReceived = false;
 
 const pageURL = window.location.href.split('#')[0];
 
-let qr = new QRious({element: qrCode, value: pageURL, size: 256});
+let qr = new QRious({element: qrCode, value: pageURL, size: 128});
 
 window.onload = (_event) => {
     if (window.location.protocol === 'http:' && !window.location.host.startsWith('localhost')) {
