@@ -1,3 +1,5 @@
+const version = '0.1.0';
+
 let _debug = false;
 
 let main = getEl('main');
@@ -41,6 +43,8 @@ window.onload = (_event) => {
         message.innerText = '/' + decodeURI(hashVal);
         notify(`${lang['n_hash_command']}: ${message.innerText}`);
     }
+
+    getEl('version-number').innerText = version;
 };
 
 message.addEventListener('paste', (event) => {
@@ -101,6 +105,10 @@ async function handleCommand(cmd, args) {
         case 'debug':
         case 'd':
             cmdDebug();
+            break;
+        case 'version':
+        case 'v':
+            cmdVersion();
             break;
         default:
             notify(`${lang['n_unknown_command']}: ${cmd}`);
@@ -263,6 +271,10 @@ async function cmdDebug() {
     if (peer) {
         peer._debug = _debug;
     }
+}
+
+async function cmdVersion() {
+    showHide('version');
 }
 
 async function cmdHelp() {
