@@ -136,6 +136,13 @@ class PeerConnection extends EventBus {
 
     async sendFile(bin) {
         if (this._fileDC && this._fileDC.readyState === 'open') {
+            if (this._fileDC.bufferedAmount > this._fileDC.bufferedAmountLowThreshold) {
+                this._fileDC.onbufferedamountlow = () => {
+                    this._fileDC.onbufferedamountlow = null;
+                    this.sendFile(e);
+                };
+                return;
+            }
             this._fileDC.send(bin);
         } else {
             throw new Error(`[webrtc/fc] readystate: ${this._fileDC ? this._fileDC.readyState : 'undefined'}`);
