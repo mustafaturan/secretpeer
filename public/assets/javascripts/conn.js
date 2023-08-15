@@ -139,7 +139,7 @@ class PeerConnection extends EventBus {
             if (this._fileDC.bufferedAmount > this._fileDC.bufferedAmountLowThreshold) {
                 this._fileDC.onbufferedamountlow = () => {
                     this._fileDC.onbufferedamountlow = null;
-                    this.sendFile(e);
+                    this.sendFile(bin);
                 };
                 return;
             }
