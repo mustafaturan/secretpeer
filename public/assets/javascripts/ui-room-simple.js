@@ -177,7 +177,7 @@ async function cmdFile() {
         const id = newID();
         peer.sendText({id: id, data: {file: {name: file.name, size: file.size}}});
 
-        messages.appendChild(buildNode('message-outgoing', id, '📎 ' + file.name + ` (${humanFileSize(file.size)})`));
+        messages.appendChild(buildAttachmentNode('message-outgoing', id, '📎 ' + file.name + ` (${humanFileSize(file.size)})`));
         main.scrollTop = main.scrollHeight;
 
         peer.createFileDC();
@@ -204,11 +204,19 @@ async function cmdFile() {
             let bin = event.target.result;
             peer.sendFile(bin);
             offset += bin.byteLength;
+
+            const percentage = Math.round(offset / file.size * 100);
+            const percentNode = getEl('p_' + id);
+            percentNode.innerText = ' (' + percentage + '%)';
+
             if (offset < file.size) {
                 readChunk(offset);
-            } else if (_debug) {
-                console.log('*** file transfer completed');
+            } else {
                 io = null;
+                percentNode.remove();
+                if (_debug) {
+                    console.log('*** file transfer completed');
+                }
             }
         }
 
@@ -407,7 +415,9 @@ function receiveFileMetadata(id, metadata) {
     if (_debug) {
         console.log('*** file metadata', fileMetadata);
     }
-    messages.appendChild(buildNode('message-incoming', id, '📎 ' + metadata.name));
+
+    const node = buildAttachmentNode('message-incoming', id, '📎 ' + metadata.name + ` (${humanFileSize(fileMetadata.size)})`);
+    messages.appendChild(node);
     main.scrollTop = main.scrollHeight;
 }
 
@@ -419,6 +429,9 @@ function receive(id, data) {
 function receiveFile(data) {
     fileBuffer.push(data);
     fileSize += data.byteLength;
+    const percentage = Math.round(fileSize / fileMetadata.size * 100);
+    const percentNode = getEl('p_' + fileMetadata.id);
+    percentNode.innerText = ' (' + percentage + '%)';
     if (fileSize === fileMetadata.size) {
         const received = new Blob(fileBuffer);
         let downloadAnchor = createEl('a');
@@ -454,8 +467,30 @@ function buildNode(type, id, msg) {
     return node;
 }
 
+function buildAttachmentNode(type, id, msg) {
+    let node = createEl('div');
+    node.classList.add('message');
+    node.classList.add(type === 'message-outgoing' ? 'text-right' : 'text-left');
+    node.classList.add('attachment');
+    let input = createEl('div');
+    input.classList.add(type)
+    let content = buildContent(id, msg);
+    content.appendChild(buildPercentage(id));
+    content.appendChild(buildTime());
+    input.appendChild(content);
+    node.appendChild(input);
+    return node;
+}
+
+function buildPercentage(id) {
+    let percentNode = createEl('span');
+    percentNode.id = 'p_' + id;
+    percentNode.innerHTML = ' (0%)';
+    return percentNode;
+}
+
 function buildTime() {
-    var node = createEl('sub');
+    let node = createEl('sub');
     node.classList.add('message-time')
     const date = new Date();
     node.innerText = pad2(date.getHours()) + ':' + pad2(date.getMinutes());
@@ -463,7 +498,7 @@ function buildTime() {
 }
 
 function buildContent(id, msg) {
-    var node = createEl('div');
+    let node = createEl('div');
     node.classList.add('content')
     node.id = 'm_' + id;
     node.innerText = msg;

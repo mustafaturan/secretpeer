@@ -17,6 +17,7 @@
     --message-incoming-bgc: #EFEFEF;
     --message-incoming-c: #222222;
     --message-time-c: #847E7E;
+    --message-attachment-bgc: lightyellow;
 
     --input-message-bgc: #FFFFFF;
     --input-message-bc: #FFFFFF;
@@ -141,6 +142,10 @@ footer {
     font-size: 0.83em;
     border-radius: 5px 5px 5px 0;
     overflow-wrap: anywhere;
+}
+
+.message .attachment {
+    background-color: var(--message-attachment-bgc) !important;
 }
 
 /* Footer content */
