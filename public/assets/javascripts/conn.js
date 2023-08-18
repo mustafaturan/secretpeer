@@ -136,7 +136,7 @@ class PeerConnection extends EventBus {
 
     async sendFile(bin) {
         if (this._fileDC && this._fileDC.readyState === 'open') {
-            if (this._fileDC.bufferedAmount > this._fileDC.bufferedAmountLowThreshold) {
+            if (!this.hasBuffer) {
                 this._fileDC.onbufferedamountlow = () => {
                     this._fileDC.onbufferedamountlow = null;
                     this.sendFile(bin);
@@ -164,6 +164,7 @@ class PeerConnection extends EventBus {
     async createFileDC() {
         this._fileDC = this._pc.createDataChannel('file', {ordered: true});
         this._fileDC.binaryType = 'arraybuffer';
+        this._fileDC.bufferedAmountLowThreshold = 65535;
         this._subscribeToDataChannelEvents(this._fileDC);
     }
 
@@ -171,6 +172,10 @@ class PeerConnection extends EventBus {
         if (this._fileDC && this._fileDC.readyState === 'open') {
             this._fileDC.close();
         }
+    }
+
+    get hasBuffer() {
+        return this._fileDC.bufferedAmountLowThreshold >= this._fileDC.bufferedAmount;
     }
 
     get isConnected() {

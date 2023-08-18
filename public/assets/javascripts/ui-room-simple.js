@@ -27,6 +27,7 @@ let fileSize = 0;
 
 let peerSignalReceived = false;
 
+const chunkSize = 8192;
 const pageURL = window.location.href.split('#')[0];
 
 let qr = new QRious({element: qrCode, value: pageURL, size: 128});
@@ -190,13 +191,21 @@ async function cmdFile() {
 
         peer.createFileDC();
 
-        const chunkSize = 8192;
         let offset = 0;
 
         // setting up the reader
         let reader = new FileReader();
 
         const readChunk = offset => {
+            if (!peer.hasBuffer) {
+                sleep(1).then(() => {
+                    readChunk(offset);
+                });
+                if (_debug) {
+                    console.log('*** wait ', offset, chunkSize);
+                }
+                return;
+            }
             if (_debug) {
                 console.log('*** file load chunk ', offset, chunkSize);
             }
@@ -556,4 +565,8 @@ function getEl(id) {
 
 function createEl(tag) {
     return document.createElement(tag);
+}
+
+function sleep(time) {
+    return new Promise((resolve) => setTimeout(resolve, time));
 }
