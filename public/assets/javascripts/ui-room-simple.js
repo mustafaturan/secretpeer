@@ -1,4 +1,4 @@
-const version = '0.2.8';
+const version = '0.2.9';
 
 let _debug = false;
 
