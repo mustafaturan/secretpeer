@@ -294,6 +294,8 @@ class PeerConnection extends EventBus {
 
         if (state === 'connected') {
             this.emit('onpeerconnected', {status: 'connected'});
+        } else if (state === 'failed') {
+            this.hangup();
         } else if (state === 'disconnected'){
             this.emit('onpeerdisconnected', {status: this.connectionState});
         }
@@ -464,6 +466,8 @@ class Caller extends PeerConnection {
             this.emit('onpeerconnected', {status: 'connected'});
         } else if (state === 'disconnected'){
             this.emit('onpeerdisconnected', {status: this.connectionState});
+        } else if (state === 'failed') {
+            this.hangup();
         } else if (state === 'connecting') {
             setTimeout(function() {
                 if (!this._queried) {
