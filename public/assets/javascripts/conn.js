@@ -406,7 +406,7 @@ class Caller extends PeerConnection {
     constructor(signal, configuration, room, ls, debug = false) {
         super('caller', signal, configuration, room, ls, debug);
         this.#dial();
-        this._querySignal(this.#accept)
+        this._pc.onconnectionstatechange = this.#_onConnectionStateChange.bind(this);
     }
 
     async #createTextDC() {
@@ -444,6 +444,19 @@ class Caller extends PeerConnection {
             }
 
             this._candidates = [];
+        }
+    }
+
+    async #_onConnectionStateChange(_event) {
+        this.log(`[webrtc/pc] connection state changed '${this._pc.connectionState}' / '${this._pc.iceConnectionState}'`);
+        const state = this.connectionState;
+
+        if (state === 'connected') {
+            this.emit('onpeerconnected', {status: 'connected'});
+        } else if (state === 'disconnected'){
+            this.emit('onpeerdisconnected', {status: this.connectionState});
+        } else if (state === 'connecting') {
+            this._querySignal(this.#accept);
         }
     }
 }

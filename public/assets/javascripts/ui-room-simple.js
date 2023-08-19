@@ -130,10 +130,8 @@ async function cmdCreate() {
         statusText.innerText = lang['status_initializing_signal'];
         prepare().then((result) => {
             [ls, room] = result;
-            setTimeout(function() {
-                dial(ls, room);
-                statusText.innerText = lang['status_waiting_participant'];
-            }, 15000);
+            dial(ls, room);
+            statusText.innerText = lang['status_waiting_participant'];
         });
     });
 }
