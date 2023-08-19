@@ -407,6 +407,9 @@ class Caller extends PeerConnection {
         super('caller', signal, configuration, room, ls, debug);
         this.#dial();
         this._pc.onconnectionstatechange = this.#_onConnectionStateChange.bind(this);
+        setTimeout(function() {
+            this._querySignal(this.#accept);
+        }.bind(this),60000);
     }
 
     async #createTextDC() {
