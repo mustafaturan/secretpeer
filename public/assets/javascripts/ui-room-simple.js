@@ -28,13 +28,15 @@ let peerSignalReceived = false;
 const chunkSize = 8192;
 const pageURL = window.location.href.split('#')[0];
 
-let qr = new QRious({element: qrCode, value: pageURL, size: 128});
+let qr = null;
 
 window.onload = (_event) => {
     if (window.location.protocol === 'http:' && !window.location.host.startsWith('localhost')) {
         window.location.protoco = 'https:';
         return;
     }
+
+    qr = new QRious({element: qrCode, value: pageURL, size: 128});
 
     message.focus();
     let hashVal = window.location.href.split('#')[1];
@@ -197,6 +199,11 @@ const sendFileToPeer = async (file) => {
     let reader = new FileReader();
 
     const readChunk = offset => {
+        if (!peer || peer.isFailed) {
+            // nothing we can do when the connection has failed
+            notify(lang['n_peer_connection_failed']);
+            return;
+        }
         if (!peer.hasBuffer(id)) {
             sleep(1).then(() => {
                 readChunk(file, offset);

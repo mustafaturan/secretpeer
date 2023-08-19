@@ -26,6 +26,7 @@ const english = {
     'n_unknown_command': 'Unknown command',
     'n_debug_enabled': 'Debug mode enabled!',
     'n_hash_command': 'Hash command is written to input, press enter/return to apply',
+    'n_peer_connection_failed': 'Peer connection closed and failed to re-establish',
 };
 
 let lang;

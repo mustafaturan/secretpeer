@@ -254,11 +254,15 @@ class PeerConnection extends EventBus {
     }
 
     hasBuffer(id) {
-        return this._fileDCs[id].hasBuffer;
+        return this._fileDCs[id] && this._fileDCs[id].hasBuffer;
     }
 
     get isConnected() {
         return this.connectionState === 'connected';
+    }
+
+    get isFailed() {
+        return this.connectionState === 'failed';
     }
 
     get _queried() {
@@ -275,6 +279,9 @@ class PeerConnection extends EventBus {
         }
         if (state === 'connected' && this._textDC && (this._textDC.readyState === 'closed' || this._textDC.readyState === 'closing')) {
             state = this._textDC.readyState;
+        }
+        if (state === 'disconnected' && (!this._pc || this._pc.connectionState === 'failed')) {
+            return 'failed';
         }
         return state;
     }
@@ -368,14 +375,14 @@ class PeerConnection extends EventBus {
     }
 
     async #_onDataChannelClose(_event) {
-        if (this._textDC.readyState !== 'open') {
+        if (this._textDC && this._textDC.readyState !== 'open') {
             this.emit('onpeerdisconnected', {status: this._textDC.readyState});
         }
         this.log(`[webrtc/dc] data channel closed (user closed: ${this._userClosed})`);
     }
 
     async #_onDataChannelError(event) {
-        if (this._textDC.readyState !== 'open') {
+        if (this._textDC && this._textDC.readyState !== 'open') {
             this.emit('onpeerdisconnected', {status: this._textDC.readyState});
         }
         this.logerror(`[webrtc/dc] dc error occurred: '${event.error}'`);
@@ -393,7 +400,6 @@ class PeerConnection extends EventBus {
     }
 
     labelPrefix(id, size) {
-        this.log('file_' + id + '_' + size + '_');
         return 'file_' + id + '_' + size + '_';
     }
 
