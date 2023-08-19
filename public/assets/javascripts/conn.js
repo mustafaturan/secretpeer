@@ -27,6 +27,90 @@ class EventBus extends EventTarget {
     }
 }
 
+class FileDC extends EventBus {
+    constructor(id, dc, debug) {
+        super();
+        // set debugging level
+        this._debug = debug;
+
+        this._id = id;
+        this._dc = dc;
+        this._dc.binaryType = 'arraybuffer';
+        this._dc.bufferedAmountLowThreshold = 65535;
+        this._dc.onclose = this.#_onDataChannelClose.bind(this);
+        this._dc.onerror = this.#_onDataChannelError.bind(this);
+        this._dc.onopen = this.#_onDataChannelOpen.bind(this);
+        this._dc.onmessage = this.#_onDataChannelMessage.bind(this);
+    }
+
+    async sendFile(bin) {
+        if (this._dc && this._dc.readyState === 'open') {
+            if (!this.hasBuffer) {
+                this._dc.onbufferedamountlow = () => {
+                    this._dc.onbufferedamountlow = null;
+                    this.sendFile(bin);
+                };
+                return;
+            }
+
+            try {
+                this._dc.send(bin);
+            } catch (e) {
+                this._dc.onbufferedamountlow = () => {
+                    this._dc.onbufferedamountlow = null;
+                    this.sendFile(bin);
+                };
+                this.log(`[webrtc/fc] got error on sending file ${e.message}`);
+            }
+        } else {
+            throw new Error(`[webrtc/fc] readystate for '${this._id}': ${this._dc ? this._dc.readyState : 'undefined'}`);
+        }
+    }
+
+    async close() {
+        if (this._dc && this._dc.readyState === 'open') {
+            this._dc.close();
+        }
+    }
+
+    get hasBuffer() {
+        return this._dc.bufferedAmountLowThreshold >= this._dc.bufferedAmount;
+    }
+
+    async #_onDataChannelMessage(event) {
+        this.emit('onpeerfile', {data: event.data, id: this._id});
+        this.log(`[webrtc/fc] file content received for '${this._id}' with byte size '${event.data.byteLength}'`);
+    }
+
+    async #_onDataChannelOpen(_event) {
+        this.log(`[webrtc/fc] file data channel opened for '${this._id}'`);
+    }
+
+    async #_onDataChannelClose(_event) {
+        if (this._dc.readyState !== 'open') {
+            this.emit('onfilechannelclose', {status: this._dc.readyState, id: this._id});
+        }
+        this.log(`[webrtc/fc] file data channel for '${this._id}' closed`);
+    }
+
+    async #_onDataChannelError(event) {
+        if (this._dc.readyState !== 'open') {
+            this.emit('onfilechannelerror', {status: this._dc.readyState, id: this._id});
+        }
+        this.logerror(`[webrtc/dc] file dc error occurred for '${this._id}' with err: '${event.error}'`);
+    }
+
+    log(msg) {
+        if (this._debug) {
+            console.log(msg);
+        }
+    }
+
+    logerror(msg) {
+        console.error(msg);
+    }
+}
+
 class PeerConnection extends EventBus {
     #signalPingCount;
 
@@ -53,6 +137,9 @@ class PeerConnection extends EventBus {
 
         // init data channel
         this._textDC = null;
+
+        // init file data channels
+        this._fileDCs = {};
 
         // init signal ping count with 0
         this.#signalPingCount = 0;
@@ -134,48 +221,40 @@ class PeerConnection extends EventBus {
         }
     }
 
-    async sendFile(bin) {
-        if (this._fileDC && this._fileDC.readyState === 'open') {
-            if (!this.hasBuffer) {
-                this._fileDC.onbufferedamountlow = () => {
-                    this._fileDC.onbufferedamountlow = null;
-                    this.sendFile(bin);
-                };
-                return;
-            }
-            this._fileDC.send(bin);
-        } else {
-            throw new Error(`[webrtc/fc] readystate: ${this._fileDC ? this._fileDC.readyState : 'undefined'}`);
-        }
+    async sendFile(id, bin) {
+        this._fileDCs[id].sendFile(bin);
     }
 
     async hangup() {
         if (this._textDC && this._textDC.readyState === 'open') {
             this._textDC.close();
         }
-        if (this._fileDC && this._fileDC.readyState === 'open') {
-            this._fileDC.close();
+        this._textDC = null;
+
+        for (const id in this._fileDCs) {
+            await this._fileDCs[id].close();
+            delete this._fileDCs[id];
         }
+        this._fileDCs = {}
+
         if (this._pc) {
             this._pc.close();
         }
+        this._pc = null;
     }
 
-    async createFileDC() {
-        this._fileDC = this._pc.createDataChannel('file', {ordered: true});
-        this._fileDC.binaryType = 'arraybuffer';
-        this._fileDC.bufferedAmountLowThreshold = 65535;
-        this._subscribeToDataChannelEvents(this._fileDC);
+    async createFileDC(id, name, size) {
+        let dc = this._pc.createDataChannel(this.labelPrefix(id, size) + name, {ordered: true});
+        this._fileDCs[id] = new FileDC(id, dc, this._debug);
     }
 
-    async destroyFileDC() {
-        if (this._fileDC && this._fileDC.readyState === 'open') {
-            this._fileDC.close();
-        }
+    async destroyFileDC(id) {
+        await this._fileDCs[id].close();
+        delete this._fileDCs[id];
     }
 
-    get hasBuffer() {
-        return this._fileDC.bufferedAmountLowThreshold >= this._fileDC.bufferedAmount;
+    hasBuffer(id) {
+        return this._fileDCs[id].hasBuffer;
     }
 
     get isConnected() {
@@ -254,13 +333,8 @@ class PeerConnection extends EventBus {
     _subscribeToDataChannelEvents(dc) {
         dc.onclose = this.#_onDataChannelClose.bind(this);
         dc.onerror = this.#_onDataChannelError.bind(this);
-        if (dc.label === 'text') {
-            dc.onopen = this.#_onDataChannelTextOpen.bind(this);
-            dc.onmessage = this.#_onDataChannelText.bind(this);
-        } else if (dc.label === 'file') {
-            dc.onopen = this.#_onDataChannelFileOpen.bind(this);
-            dc.onmessage = this.#_onDataChannelFile.bind(this);
-        }
+        dc.onopen = this.#_onDataChannelTextOpen.bind(this);
+        dc.onmessage = this.#_onDataChannelText.bind(this);
     }
 
     /*
@@ -268,14 +342,22 @@ class PeerConnection extends EventBus {
     */
     async #_onDataChannel(event) {
         let dc = event.channel;
-        this._subscribeToDataChannelEvents(dc);
         this.log(`[webrtc/dc] data channel received: ${dc.label}`);
 
         if (dc.label === 'text') {
             this._textDC = dc;
-        } else if (dc.label === 'file') {
-            this._fileDC = dc;
-            this._fileDC.binaryType = 'arraybuffer';
+            this._subscribeToDataChannelEvents(dc);
+        } else if (dc.label.startsWith('file_')) {
+            const label = dc.label.split('_', 3);
+            const id = label[1];
+            const size = Number(label[2]);
+            const filename = dc.label.replace(this.labelPrefix(label[1], label[2]), '');
+            this.emit('onpeerfilemetadata', {id: id, data: {name: filename, size: size}}).then(() => {
+                this._fileDCs[id] = new FileDC(id, dc, this._debug);
+                this._fileDCs[id].on('onpeerfile', function(event) {
+                    this.emit('onpeerfile', event);
+                }.bind(this));
+            });
         }
     }
 
@@ -295,21 +377,8 @@ class PeerConnection extends EventBus {
 
     async #_onDataChannelText(event) {
         let msg = JSON.parse(event.data);
-        if (msg.data.file) {
-            this.emit('onpeerfilemetadata', {id: msg.id, data: msg.data.file});
-        } else {
-            this.emit('onpeermessage', {id: msg.id, data: msg.data});
-        }
-
+        this.emit('onpeermessage', {id: msg.id, data: msg.data});
         this.log(`[webrtc/tc] message received: '${event.data}'`);
-    }
-
-    async #_onDataChannelFile(event) {
-        if (this._textDC.readyState === 'open') {
-            this.emit('onpeerfile', {data: event.data});
-        }
-
-        this.log(`[webrtc/fc] file content received with byte size: '${event.data.byteLength}'`);
     }
 
     async #_onDataChannelTextOpen(_event) {
@@ -317,8 +386,9 @@ class PeerConnection extends EventBus {
         this.log('[webrtc/tc] text channel open');
     }
 
-    async #_onDataChannelFileOpen(_event) {
-        this.log('[webrtc/fc] file channel open');
+    labelPrefix(id, size) {
+        this.log('file_' + id + '_' + size + '_');
+        return 'file_' + id + '_' + size + '_';
     }
 
     log(msg) {

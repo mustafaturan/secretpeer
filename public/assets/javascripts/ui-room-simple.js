@@ -21,9 +21,7 @@ let qrImage = getEl('qrimage');
 let keys = [];
 let peer;
 
-let fileBuffer = [];
-let fileMetadata = {};
-let fileSize = 0;
+let files = {};
 
 let peerSignalReceived = false;
 
@@ -117,9 +115,7 @@ async function handleCommand(cmd, args) {
 }
 
 async function cmdClean() {
-    fileBuffer = [];
-    fileMetadata = {};
-    fileSize = 0;
+    files = {};
     messages.innerHTML = '';
     showHide('messages');
 }
@@ -184,12 +180,12 @@ async function cmdFile() {
         }
 
         const id = newID();
-        peer.sendText({id: id, data: {file: {name: file.name, size: file.size}}});
 
         messages.appendChild(buildAttachmentNode('message-outgoing', id, '📎 ' + file.name + ` (${humanFileSize(file.size)})`));
         main.scrollTop = main.scrollHeight;
 
-        peer.createFileDC();
+        peer.createFileDC(id, file.name, file.size);
+        sleep(1000);
 
         let offset = 0;
 
@@ -219,7 +215,7 @@ async function cmdFile() {
                 console.log('*** file chunk loaded', offset, chunkSize);
             }
             let bin = event.target.result;
-            peer.sendFile(bin);
+            peer.sendFile(id, bin);
             offset += bin.byteLength;
 
             const percentage = Math.round(offset / file.size * 100);
@@ -332,7 +328,7 @@ async function subscribeToPeerEvents() {
         receiveFileMetadata(event.id, event.data);
     });
     peer.on('onpeerfile', function(event) {
-        receiveFile(event.data);
+        receiveFile(event);
     });
 
     /*Signal*/
@@ -431,13 +427,17 @@ async function showHide(show) {
 }
 
 function receiveFileMetadata(id, metadata) {
-    fileMetadata = metadata;
     metadata['id'] = id;
+    files[id] = {
+        buffer: [],
+        metadata: metadata,
+        size: 0
+    }
     if (_debug) {
-        console.log('*** file metadata', fileMetadata);
+        console.log('*** file metadata', files[id].metadata);
     }
 
-    const node = buildAttachmentNode('message-incoming', id, '📎 ' + metadata.name + ` (${humanFileSize(fileMetadata.size)})`);
+    const node = buildAttachmentNode('message-incoming', id, '📎 ' + metadata.name + ` (${humanFileSize(files[id].metadata.size)})`);
     messages.appendChild(node);
     main.scrollTop = main.scrollHeight;
 }
@@ -447,28 +447,28 @@ function receive(id, data) {
     main.scrollTop = main.scrollHeight;
 }
 
-function receiveFile(data) {
-    fileBuffer.push(data);
-    fileSize += data.byteLength;
-    const percentage = Math.round(fileSize / fileMetadata.size * 100);
-    const percentNode = getEl('p_' + fileMetadata.id);
+function receiveFile(event) {
+    const id = event.id;
+    const data = event.data;
+    files[id].buffer.push(data);
+    files[id].size += data.byteLength;
+    const percentage = Math.round(files[id].size / files[id].metadata.size * 100);
+    const percentNode = getEl('p_' + id);
     percentNode.innerText = ' (' + percentage + '%)';
-    if (fileSize === fileMetadata.size) {
-        const received = new Blob(fileBuffer);
+    if (files[id].size === files[id].metadata.size) {
+        const received = new Blob(files[id].buffer);
         let downloadAnchor = createEl('a');
         downloadAnchor.href = URL.createObjectURL(received);
-        downloadAnchor.download = fileMetadata.name;
+        downloadAnchor.download = files[id].metadata.name;
         downloadAnchor.textContent =
-          `${fileMetadata.name} (${humanFileSize(fileMetadata.size)})`;
-        const node = getEl('m_' + fileMetadata.id);
+          `${files[id].metadata.name} (${humanFileSize(files[id].metadata.size)})`;
+        const node = getEl('m_' + id);
         node.innerHTML = '<span>📎 </span>';
         node.appendChild(downloadAnchor);
         node.appendChild(buildTime());
-        peer.destroyFileDC();
+        peer.destroyFileDC(id);
 
-        fileBuffer = [];
-        fileSize = 0;
-        fileMetadata = {};
+        delete files[id];
         if (_debug) {
             console.log('***file tranfer completed');
         }
