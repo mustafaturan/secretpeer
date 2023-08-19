@@ -167,74 +167,76 @@ async function cmdFile() {
     }
     let io = createEl('input');
     io.type = 'file';
+    io.multiple = 'multiple';
 
     io.onchange = e => {
-        // getting a hold of the file reference
-        let file = e.target.files[0];
-
-        if (file.size === 0) {
-            notify(lang['n_empty_file']);
-            throw new Error('empty file transfer is not allowed!');
+        for (let i = 0; i < e.target.files.length; i++) {
+            const file = e.target.files[i];
+            sendFileToPeer(file);
         }
-
-        const id = newID();
-
-        messages.appendChild(buildAttachmentNode('message-outgoing', id, '📎 ' + file.name + ` (${humanFileSize(file.size)})`));
-        main.scrollTop = main.scrollHeight;
-
-        peer.createFileDC(id, file.name, file.size);
-        sleep(1000);
-
-        let offset = 0;
-
-        // setting up the reader
-        let reader = new FileReader();
-
-        const readChunk = offset => {
-            if (!peer.hasBuffer(id)) {
-                sleep(1).then(() => {
-                    readChunk(offset);
-                });
-                if (_debug) {
-                    console.log('*** wait ', offset, chunkSize);
-                }
-                return;
-            }
-            if (_debug) {
-                console.log('*** file load chunk ', offset, chunkSize);
-            }
-            const slice = file.slice(offset, offset + chunkSize);
-            reader.readAsArrayBuffer(slice);
-        };
-
-        // here we tell the reader what to do when it's done reading...
-        reader.onload = event => {
-            if (_debug) {
-                console.log('*** file chunk loaded', offset, chunkSize);
-            }
-            let bin = event.target.result;
-            peer.sendFile(id, bin);
-            offset += bin.byteLength;
-
-            const percentage = Math.round(offset / file.size * 100);
-            const percentNode = getEl('p_' + id);
-            percentNode.innerText = ' (' + percentage + '%)';
-
-            if (offset < file.size) {
-                readChunk(offset);
-            } else {
-                io = null;
-                percentNode.remove();
-                if (_debug) {
-                    console.log('*** file transfer completed');
-                }
-            }
-        }
-
-        readChunk(0);
     }
 
     io.click();
+}
+
+const sendFileToPeer = async (file) => {
+    if (file.size === 0) {
+        notify(lang['n_empty_file']);
+        throw new Error('empty file transfer is not allowed!');
+    }
+
+    const id = newID();
+
+    messages.appendChild(buildAttachmentNode('message-outgoing', id, '📎 ' + file.name + ` (${humanFileSize(file.size)})`));
+    main.scrollTop = main.scrollHeight;
+
+    peer.createFileDC(id, file.name, file.size);
+    sleep(1000);
+
+    let offset = 0;
+    let reader = new FileReader();
+
+    const readChunk = offset => {
+        if (!peer.hasBuffer(id)) {
+            sleep(1).then(() => {
+                readChunk(file, offset);
+            });
+            if (_debug) {
+                console.log('*** wait ', offset, chunkSize);
+            }
+            return;
+        }
+        if (_debug) {
+            console.log('*** file load chunk ', offset, chunkSize);
+        }
+        const slice = file.slice(offset, offset + chunkSize);
+        reader.readAsArrayBuffer(slice);
+    };
+
+    // here we tell the reader what to do when it's done reading...
+    reader.onload = event => {
+        if (_debug) {
+            console.log('*** file chunk loaded', offset, chunkSize);
+        }
+        let bin = event.target.result;
+        peer.sendFile(id, bin);
+        offset += bin.byteLength;
+
+        const percentage = Math.round(offset / file.size * 100);
+        const percentNode = getEl('p_' + id);
+        percentNode.innerText = ' (' + percentage + '%)';
+
+        if (offset < file.size) {
+            readChunk(offset);
+        } else {
+            percentNode.remove();
+            if (_debug) {
+                console.log('*** file transfer completed');
+            }
+        }
+    };
+
+    readChunk(offset);
 }
 
 async function cmdSend(msg) {
