@@ -191,7 +191,7 @@ async function cmdFile() {
         let reader = new FileReader();
 
         const readChunk = offset => {
-            if (!peer.hasBuffer) {
+            if (!peer.hasBuffer(id)) {
                 sleep(1).then(() => {
                     readChunk(offset);
                 });
