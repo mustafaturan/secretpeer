@@ -172,6 +172,7 @@ class PeerConnection extends EventBus {
     }
 
     async _querySignal(callbackFn) {
+        this._queried = true;
         const url = this._signalURL +
             '?room=' + this._room +
             '&intent=' + (this._whois === 'caller' ? 'answer' : 'offer') +
@@ -460,7 +461,9 @@ class Caller extends PeerConnection {
             this.emit('onpeerdisconnected', {status: this.connectionState});
         } else if (state === 'connecting') {
             setTimeout(function() {
-                this._querySignal(this.#accept);
+                if (!this._queried) {
+                    this._querySignal(this.#accept);
+                }
             }.bind(this),3000);
         }
     }
