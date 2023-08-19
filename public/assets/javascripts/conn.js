@@ -83,14 +83,14 @@ class FileDC extends EventBus {
     }
 
     async #_onDataChannelOpen(_event) {
-        this.log(`[webrtc/fc] file data channel opened for '${this._id}'`);
+        this.log(`[webrtc/fc] file dc opened for '${this._id}'`);
     }
 
     async #_onDataChannelClose(_event) {
         if (this._dc.readyState !== 'open') {
             this.emit('onfilechannelclose', {status: this._dc.readyState, id: this._id});
         }
-        this.log(`[webrtc/fc] file data channel for '${this._id}' closed`);
+        this.log(`[webrtc/fc] file dc for '${this._id}' closed`);
     }
 
     async #_onDataChannelError(event) {
@@ -172,7 +172,7 @@ class PeerConnection extends EventBus {
     }
 
     async _querySignal(callbackFn) {
-        this._queried = true;
+        this.#signalPingCount += 1;
         const url = this._signalURL +
             '?room=' + this._room +
             '&intent=' + (this._whois === 'caller' ? 'answer' : 'offer') +
@@ -195,14 +195,13 @@ class PeerConnection extends EventBus {
             response.json().then(signalMsg => {
                 handleSignal(callbackFn, signalMsg);
             });
-        } else if (this.#signalPingCount >= 20) {
+        } else if (this.#signalPingCount > 20) {
             this.emit('onsignalclose', {status: 'failed'})
             return
         } else {
             setTimeout(function() {
                 this._querySignal(callbackFn);
             }.bind(this),30000);
-            this.#signalPingCount += 1;
             this.emit('onsignalmessage', {status: 'wait'});
         }
     }
@@ -260,6 +259,10 @@ class PeerConnection extends EventBus {
 
     get isConnected() {
         return this.connectionState === 'connected';
+    }
+
+    get _queried() {
+        return this.#signalPingCount > 0;
     }
 
     get connectionState() {
@@ -409,7 +412,9 @@ class Caller extends PeerConnection {
         this.#dial();
         this._pc.onconnectionstatechange = this.#_onConnectionStateChange.bind(this);
         setTimeout(function() {
-            this._querySignal(this.#accept);
+            if (!this._queried) {
+                this._querySignal(this.#accept);
+            }
         }.bind(this),60000);
     }
 
