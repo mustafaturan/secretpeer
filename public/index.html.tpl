@@ -126,7 +126,7 @@
         <div contenteditable="true" id="message" class="input-message" data-text="Type command or message"></div>
     </div>
 </footer>
-<script type="text/javascript" src="./assets/javascripts/dist/bundle-ec26f8d22e8b2cdf6495ab6ca38b8830eb687a31.js" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<script type="text/javascript" src="./assets/javascripts/dist/bundle.js" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
 <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/qrious/4.0.2/qrious.min.js" integrity="sha512-pUhApVQtLbnpLtJn6DuzDD5o2xtmLJnJ7oBoMsBnzOkVkpqofGLGPaBJ6ayD2zQe3lCgCibhJBi4cj5wAxwVKA==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
 
 </body>
