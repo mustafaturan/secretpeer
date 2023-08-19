@@ -456,7 +456,9 @@ class Caller extends PeerConnection {
         } else if (state === 'disconnected'){
             this.emit('onpeerdisconnected', {status: this.connectionState});
         } else if (state === 'connecting') {
-            this._querySignal(this.#accept);
+            setTimeout(function() {
+                this._querySignal(this.#accept);
+            }.bind(this),3000);
         }
     }
 }
