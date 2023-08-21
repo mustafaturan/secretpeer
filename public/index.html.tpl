@@ -3,7 +3,6 @@
 
 <head>
     <title>secretpeer</title>
-    <meta name="robots" content="noindex">
     <meta http-equiv="X-XSS-Protection"  content="1;mode=block" always>
     <meta http-equiv="Referrer-Policy" content="no-referrer, strict-origin-when-cross-origin"><head>
     <meta charset="utf-8">
