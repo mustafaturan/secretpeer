@@ -1,4 +1,4 @@
-const version = '0.3.1';
+const version = '0.3.2';
 const english = {
     // status
     'status_initializing_signal': 'initializing signal',
