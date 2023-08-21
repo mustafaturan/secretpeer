@@ -1,3 +1,4 @@
+const version = '0.3.1';
 const english = {
     // status
     'status_initializing_signal': 'initializing signal',
@@ -743,8 +744,6 @@ class Callee extends PeerConnection {
         );
     }
 }
-const version = '0.3.0';
-
 let _debug = false;
 
 let main = getEl('main');

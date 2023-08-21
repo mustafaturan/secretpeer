@@ -1,5 +1,3 @@
-const version = '0.3.0';
-
 let _debug = false;
 
 let main = getEl('main');
