@@ -1,4 +1,4 @@
-const version = '0.3.2';
+const version = '0.3.3';
 const english = {
     // status
     'status_initializing_signal': 'initializing signal',
@@ -779,6 +779,8 @@ window.onload = (_event) => {
         window.location.protoco = 'https:';
         return;
     }
+
+    setLanguage('en_US');
 
     qr = new QRious({element: qrCode, value: pageURL, size: 128});
 

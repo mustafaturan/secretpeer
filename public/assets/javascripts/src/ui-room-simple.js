@@ -34,6 +34,8 @@ window.onload = (_event) => {
         return;
     }
 
+    setLanguage('en_US');
+
     qr = new QRious({element: qrCode, value: pageURL, size: 128});
 
     message.focus();
