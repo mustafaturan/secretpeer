@@ -125,6 +125,8 @@
 </footer>
 <script type="text/javascript" src="./assets/javascripts/dist/bundle.js" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
 <script type="text/javascript" src="./assets/javascripts/deps/qurious-min-v402.js" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
-
+<!-- 100% privacy-first analytics -->
+<script async defer src="https://scripts.simpleanalyticscdn.com/latest.js"></script>
+<noscript><img src="https://queue.simpleanalyticscdn.com/noscript.gif" alt="" referrerpolicy="no-referrer-when-downgrade" /></noscript>
 </body>
 </html>
