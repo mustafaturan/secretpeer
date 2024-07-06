@@ -7,7 +7,7 @@
     <meta http-equiv="Referrer-Policy" content="no-referrer, strict-origin-when-cross-origin">
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes" />
     <meta property="og:title" content="secretpeer" />
     <meta property="og:locale" content="en_US" />
     <meta name="description" content="End to end encrypted peer to peer messaging and file transfer web app" />
