@@ -125,6 +125,6 @@
     </div>
 </footer>
 <script type="text/javascript" src="./assets/javascripts/dist/bundle.js" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
-<script type="text/javascript" src="./assets/javascripts/deps/qurious-min-v402.js" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<script type="text/javascript" src="./assets/javascripts/deps/qurious-min-v402.js" crossorigin="anonymous" referrerpolicy="no-referrer" async></script>
 </body>
 </html>
