@@ -28,6 +28,8 @@ const pageURL = window.location.href.split('#')[0];
 
 let qr = null;
 
+let historyState = {}
+
 window.onload = (_event) => {
     if (window.location.protocol === 'http:' && !window.location.host.startsWith('localhost')) {
         window.location.protoco = 'https:';
@@ -74,15 +76,18 @@ async function handleCommand(cmd, args) {
     switch(cmd) {
         case 'help':
         case 'h':
+            history.pushState(historyState, 'Help', '#help');
             cmdHelp();
             break;
         case 'privacy':
         case 'p':
+            history.pushState(historyState, 'Privacy', '#privacy');
             cmdPrivacy();
             break;
         case 'clean':
         case 'clear':
         case 'n':
+            history.pushState(historyState, 'Clear', '#clear');
             cmdClean();
             break;
         case 'file':
@@ -91,16 +96,19 @@ async function handleCommand(cmd, args) {
             break;
         case 'create':
         case 'c':
+            history.pushState(historyState, 'Chat room', '#room');
             cmdCreate();
             break;
         case 'join':
         case 'j':
+            history.pushState(historyState, 'Chat room', '#room');
             cmdJoin(args);
             break;
         case 'leave':
         case 'quit':
         case 'exit':
         case 'q':
+            history.pushState(historyState, 'secretpeer', '/');
             cmdLeave();
             break;
         case 'debug':
@@ -109,6 +117,7 @@ async function handleCommand(cmd, args) {
             break;
         case 'version':
         case 'v':
+            history.pushState(historyState, 'App version', '#version');
             cmdVersion();
             break;
         default:
