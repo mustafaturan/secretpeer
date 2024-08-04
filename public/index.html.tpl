@@ -22,7 +22,6 @@
     </script>
     <link rel="stylesheet" href="./assets/stylesheets/normalize.min.css" crossorigin="anonymous" referrerpolicy="no-referrer" />
     <link rel="stylesheet" href="./assets/stylesheets/base.css" crossorigin="anonymous" referrerpolicy="no-referrer"  />
-    <script defer data-domain="secretpeer.com" src="https://plausible.io/js/script.js"></script>
 </head>
 <body>
 <header>
