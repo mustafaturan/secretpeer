@@ -880,6 +880,9 @@ async function cmdClean() {
 async function cmdCreate() {
     await cmdClean();
     generate().then(() => {
+        if (qr === null) {
+            qr = new QRious({element: qrCode, value: pageURL, size: 128});
+        }
         qr.set({value: encodeURI(pageURL + '#j ' + keys.join(' '))});
         qrImage.innerHTML = '';
         qrImage.appendChild(qr.image);
