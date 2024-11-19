@@ -824,11 +824,13 @@ async function handleCommand(cmd, args) {
         case 'h':
             history.pushState(historyState, 'Help', '#help');
             cmdHelp();
+            p();
             break;
         case 'privacy':
         case 'p':
             history.pushState(historyState, 'Privacy', '#privacy');
             cmdPrivacy();
+            p();
             break;
         case 'clean':
         case 'clear':
@@ -844,11 +846,13 @@ async function handleCommand(cmd, args) {
         case 'c':
             history.pushState(historyState, 'Chat room', '#room');
             cmdCreate();
+            p();
             break;
         case 'join':
         case 'j':
             history.pushState(historyState, 'Chat room', '#room');
             cmdJoin(args);
+            p();
             break;
         case 'leave':
         case 'quit':
@@ -865,9 +869,16 @@ async function handleCommand(cmd, args) {
         case 'v':
             history.pushState(historyState, 'App version', '#version');
             cmdVersion();
+            p();
             break;
         default:
             notify(`${lang['n_unknown_command']}: ${cmd}`);
+    }
+}
+
+async function p() {
+    if (window.signal !== undefined) {
+        window.signal.pageview();
     }
 }
 
