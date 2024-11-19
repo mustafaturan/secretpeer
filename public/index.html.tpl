@@ -22,6 +22,7 @@
     </script>
     <link rel="stylesheet" href="./assets/stylesheets/normalize.min.css" crossorigin="anonymous" referrerpolicy="no-referrer" />
     <link rel="stylesheet" href="./assets/stylesheets/base.css" crossorigin="anonymous" referrerpolicy="no-referrer"  />
+    <script defer data-do="secretpeer.com" data-id="051rc6YFmDq" data-api="//us.onsignal.cc" src="//app.onsignal.cc/onsignalcc-min.js" id="onsignalcc"></script>
 </head>
 <body>
 <header>
@@ -49,6 +50,11 @@
 
                 You can start using the service by using the commands below.
                 Source code is available at <a href="https://github.com/mustafaturan/secretpeer">https://github.com/mustafaturan/secretpeer</a>
+            </p>
+
+            <p>
+                NOTE: For page-view analytics, it is using privacy-friendly cookie-less analytics solution onsignal.cc as private trial.
+                The analytics tracker might be removed or replaced with another privacy-friendly solution in the future.
             </p>
 
             <ul class="commands">
@@ -92,6 +98,10 @@
                     So, the Signaling service is only responsible to help exchanging the end-to-end encrypted SDP information.
                 </li>
             </ul>
+            <p>
+                For page-view analytics, it is using privacy-friendly cookie-less analytics solution onsignal.cc as private trial.
+                The analytics tracker might be removed or replaced with another privacy-friendly solution in the future.
+            </p>
         </div>
         <div class="main-content" id="version" hidden>
             <div class="version text-center">
