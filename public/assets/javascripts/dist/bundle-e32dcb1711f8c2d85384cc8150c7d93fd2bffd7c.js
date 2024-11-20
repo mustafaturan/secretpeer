@@ -901,6 +901,9 @@ async function cmdCreate() {
         qrImage.innerHTML = '';
         qrImage.appendChild(qr.image);
         messages.innerHTML = setup.innerHTML;
+        if (lang === undefined) {
+            setLanguage('en_US');
+        }
         statusText.innerText = lang['status_initializing_signal'];
         prepare().then((result) => {
             [ls, room] = result;
