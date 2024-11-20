@@ -22,7 +22,7 @@
     </script>
     <link rel="stylesheet" href="./assets/stylesheets/normalize.min.css" crossorigin="anonymous" referrerpolicy="no-referrer" />
     <link rel="stylesheet" href="./assets/stylesheets/base.css" crossorigin="anonymous" referrerpolicy="no-referrer"  />
-    <script defer data-do="secretpeer.com" data-id="051rc6YFmDq" data-api="//us.onsignal.cc" src="//app.onsignal.cc/onsignalcc-min.js" id="onsignalcc"></script>
+    <script defer data-do="secretpeer.com" data-id="051rc6YFmDq" data-api="//us.onsignal.cc" data-hm="1" src="//app.onsignal.cc/onsignalcc-min.js" id="onsignalcc"></script>
 </head>
 <body>
 <header>
