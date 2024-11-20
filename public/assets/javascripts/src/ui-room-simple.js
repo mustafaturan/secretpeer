@@ -73,6 +73,9 @@ message.addEventListener('keydown', function(event) {
 });
 
 async function handleCommand(cmd, args) {
+    if (lang === null) {
+        setLanguage('en_US');
+    }
     switch(cmd) {
         case 'help':
         case 'h':
