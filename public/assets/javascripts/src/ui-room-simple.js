@@ -30,9 +30,9 @@ let qr = null;
 
 let historyState = {}
 
-window.onload = (_event) => {
+window.onload = function () {
     if (window.location.protocol === 'http:' && !window.location.host.startsWith('localhost')) {
-        window.location.protoco = 'https:';
+        window.location.protocol = 'https:';
         return;
     }
 
