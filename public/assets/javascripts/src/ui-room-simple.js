@@ -30,7 +30,7 @@ let qr = null;
 
 let historyState = {}
 
-window.onload = function () {
+window.addEventListener('load', () => {
     if (window.location.protocol === 'http:' && !window.location.host.startsWith('localhost')) {
         window.location.protocol = 'https:';
         return;
@@ -48,7 +48,7 @@ window.onload = function () {
     }
 
     getEl('version-number').innerText = version;
-};
+});
 
 message.addEventListener('paste', (event) => {
     event.preventDefault();
@@ -117,6 +117,7 @@ async function handleCommand(cmd, args) {
         case 'q':
             history.pushState(historyState, 'secretpeer', '/');
             cmdLeave();
+            p();
             break;
         case 'debug':
         case 'd':
