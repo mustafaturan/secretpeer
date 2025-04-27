@@ -22,7 +22,7 @@
     </script>
     <link rel="stylesheet" href="./assets/stylesheets/normalize.min.css" crossorigin="anonymous" referrerpolicy="no-referrer" />
     <link rel="stylesheet" href="./assets/stylesheets/base.css" crossorigin="anonymous" referrerpolicy="no-referrer"  />
-    <script defer data-do="secretpeer.com" data-id="051rc6YFmDq" data-api="//us.onsignal.cc" src="//cdn.onsignal.cc/onsignalcc-min.js" id="onsignalcc"></script>
+    <link rel="preconnect" href="//eu.plainsignal.com/" crossorigin /><script defer data-do="secretpeer.com" data-id="0DUaCNSdQOY" data-api="//eu.plainsignal.com" src="//cdn.plainsignal.com/plainsignal-min.js"></script>
 </head>
 <body>
 <header>
@@ -53,7 +53,7 @@
             </p>
 
             <p>
-                NOTE: For page-view analytics, it is using privacy-friendly cookie-less analytics solution onsignal.cc as private trial.
+                NOTE: For page-view analytics, it is using privacy-friendly cookie-free analytics solution <a href="https://plainsignal.com/?utm_source=secretpeer&utm_medium=referral&utm_campaign=opensource" target="_blank">plainsignal.com</a> as private beta.
                 The analytics tracker might be removed or replaced with another privacy-friendly solution in the future.
             </p>
 
